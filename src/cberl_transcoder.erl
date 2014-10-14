@@ -2,13 +2,14 @@
 -export([encode_value/2, decode_value/2, flag/1]).
 -include("cberl.hrl").
 
+-define('CBE_TRA',      16#0000).
 -define('CBE_JSON',     16#0002).
 -define('CBE_RAW',      16#0004).
 -define('CBE_STR',      16#0008).
 
 -define(STANDARD_FLAG, json).
 
--type encoder() :: json | raw | str.
+-type encoder() :: json | raw | str | transparent.
 -type encoder_list() :: [encoder()].
 
 -spec encode_value(encoder() | encoder_list(), value()) -> value().
@@ -40,6 +41,7 @@ flag(standard) -> flag(?STANDARD_FLAG);
 flag(json) -> ?'CBE_JSON';
 flag(raw_binary) -> ?'CBE_RAW';
 flag(str) -> ?'CBE_STR';
+flag(transparent) -> ?'CBE_TRA';
 flag(Encoders) when is_list(Encoders) ->
     lists:foldr(fun(Encoder, Acc) ->
                 Acc bor flag(Encoder)
