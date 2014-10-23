@@ -14,7 +14,7 @@
 -export([incr/3, incr/4, incr/5, decr/3, decr/4, decr/5]).
 -export([arithmetic/6]).
 %retrieval operations
--export([get_and_touch/3, get_and_lock/3, mget/2, get/2, unlock/3,
+-export([get_and_touch/3, get_and_lock/3, mget/2, mget/4, get/2, get/3, unlock/3,
          mget/3, getl/3, http/6, view/4, foldl/3, foldr/3, foreach/2]).
 %remove
 -export([remove/2, flush/1, flush/2]).
@@ -155,6 +155,10 @@ decr(PoolPid, Key, OffSet, Default, Exp) ->
 get_and_touch(PoolPid, Key, Exp) ->
     mget(PoolPid, [Key], Exp).
 
+-spec get(pid(), key(), atom()) -> {ok, integer(), value()} | {error, _}.
+get(PoolPid, Key, TranscoderOpts) ->
+    hd(mget(PoolPid, [Key], 0, TranscoderOpts)).
+
 -spec get(pid(), key()) -> {ok, integer(), value()} | {error, _}.
 get(PoolPid, Key) ->
     hd(mget(PoolPid, [Key], 0)).
@@ -202,6 +206,10 @@ store(PoolPid, Op, Key, Value, TranscoderOpts, Exp, Cas) ->
 -spec mget(pid(), [key()], integer()) -> list().
 mget(PoolPid, Keys, Exp) ->
     execute(PoolPid, {mget, Keys, Exp, 0}).
+
+-spec mget(pid(), [key()], integer(), atom()) -> list().
+mget(PoolPid, Keys, Exp, TranscoderOpts) ->
+    execute(PoolPid, {mget, Keys, Exp, 0, cberl_transcoder:flag(TranscoderOpts)}).
 
 %% @doc Get an item with a lock that has a timeout
 %% Instance libcouchbase instance to use
