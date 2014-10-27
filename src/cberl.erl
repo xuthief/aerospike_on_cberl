@@ -157,7 +157,7 @@ get_and_touch(PoolPid, Key, Exp) ->
 
 -spec get(pid(), key(), atom()) -> {ok, integer(), value()} | {error, _}.
 get(PoolPid, Key, TranscoderOpts) ->
-    hd(mget(PoolPid, [Key], 0, TranscoderOpts)).
+    hd(mget(PoolPid, [Key], 0, {trans, TranscoderOpts})).
 
 -spec get(pid(), key()) -> {ok, integer(), value()} | {error, _}.
 get(PoolPid, Key) ->
@@ -207,9 +207,9 @@ store(PoolPid, Op, Key, Value, TranscoderOpts, Exp, Cas) ->
 mget(PoolPid, Keys, Exp) ->
     execute(PoolPid, {mget, Keys, Exp, 0}).
 
--spec mget(pid(), [key()], integer(), atom()) -> list().
-mget(PoolPid, Keys, Exp, TranscoderOpts) ->
-    execute(PoolPid, {mget, Keys, Exp, 0, cberl_transcoder:flag(TranscoderOpts)}).
+-spec mget(pid(), [key()], integer(), tuple()) -> list().
+mget(PoolPid, Keys, Exp, {trans, TranscoderOpts}) ->
+    execute(PoolPid, {mget, Keys, Exp, 0, {trans, cberl_transcoder:flag(TranscoderOpts)}}).
 
 %% @doc Get an item with a lock that has a timeout
 %% Instance libcouchbase instance to use

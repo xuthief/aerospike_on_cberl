@@ -92,7 +92,7 @@ handle_call({store, Op, Key, Value, TranscoderOpts, Exp, Cas}, _From,
     end;
 
 
-handle_call({mget, Keys, Exp, Lock, Flag}, _From,
+handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
     State = #instance{handle = Handle, transcoder = Transcoder}) ->
     ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock]),
     Reply = receive
