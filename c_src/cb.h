@@ -28,6 +28,7 @@ typedef struct mget_args {
     size_t* nkeys;
     int exp;
     int lock;
+    int gettype;
 } mget_args_t;
 
 typedef struct unlock_args {

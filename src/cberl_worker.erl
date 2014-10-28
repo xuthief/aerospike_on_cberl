@@ -94,7 +94,7 @@ handle_call({store, Op, Key, Value, TranscoderOpts, Exp, Cas}, _From,
 
 handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
     State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock]),
+    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
     Reply = receive
                 {error, Error} -> {error, Error};
                 {ok, Results} ->
@@ -110,9 +110,36 @@ handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
             end,
     {reply, Reply, State};
 
-handle_call({mget, Keys, Exp, Lock}, _From,
+handle_call({mget, Keys, Exp, Lock, Type}, _From, 
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock]),
+    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock, Type]),
+    Reply = receive
+        {error, Error} -> {error, Error};
+        {ok, Results} ->
+            lists:map(fun(Result) ->
+                        case Result of
+                            {Cas, Flag, Key, Value} ->
+                                case Type of
+                                    ?'CBE_LGET' ->
+                                        {Key, Cas, binary_to_uint64_list(Value)};
+                                    ?'CBE_LDEQUEUE' ->
+                                        {Key, Cas, binary_to_uint64(Value)};
+                                    ?'CBE_SGET' ->
+                                        {Key, Cas, binary_to_uint64_list(Value)};
+                                    _ ->
+                                        DecodedValue = Transcoder:decode_value(Flag, Value),
+                                        {Key, Cas, DecodedValue}
+                                end;
+                            {_Key, {error, _Error}} ->
+                                Result
+                        end
+                end, Results)
+    end,
+    {reply, Reply, State};
+
+handle_call({mget, Keys, Exp, Lock}, _From, 
+            State = #instance{handle = Handle, transcoder = Transcoder}) ->
+    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, Results} ->
@@ -216,7 +243,12 @@ operation_value(add) -> ?'CBE_ADD';
 operation_value(replace) -> ?'CBE_REPLACE';
 operation_value(set) -> ?'CBE_SET';
 operation_value(append) -> ?'CBE_APPEND';
-operation_value(prepend) -> ?'CBE_PREPEND'.
+operation_value(prepend) -> ?'CBE_PREPEND';
+operation_value(lenqueue) -> ?'CBE_LENQUEUE';
+operation_value(lremove) -> ?'CBE_LREMOVE';
+operation_value(sadd) -> ?'CBE_SADD';
+operation_value(sremove) -> ?'CBE_SREMOVE';
+operation_value(sismember) -> ?'CBE_SISMEMBER'.
 
 -spec op(atom()) -> integer().
 op(connect) -> ?'CMD_CONNECT';
@@ -233,4 +265,17 @@ canonical_bucket_name(Name) ->
     case Name of
         [] -> "default";
         BucketName -> BucketName
+    end.
+
+-spec binary_to_uint64(binary()) -> integer().
+binary_to_uint64(Bin) ->
+    case Bin of 
+        <<U64:64/unsigned-big-integer>> -> U64
+    end.
+
+-spec binary_to_uint64_list(binary()) -> list().
+binary_to_uint64_list(Bin) ->
+    case Bin of
+        <<U64:64/unsigned-big-integer>> -> [U64];
+        <<U64:64/unsigned-big-integer, Rest/binary>> -> [U64 | binary_to_uint64_list(Rest)]
     end.

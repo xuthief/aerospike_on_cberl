@@ -20,7 +20,10 @@
 -export([remove/2, flush/1, flush/2]).
 %design doc opertations
 -export([set_design_doc/3, remove_design_doc/2]).
-
+%queue opts
+-export([lenqueue/4, ldequeue/3, lremove/4, lget/2]).
+%sets opts
+-export([sadd/4, sismember/4, sremove/4, sget/2]).
 
 %% @equiv start_link(PoolName, NumCon, "localhost:8091", "", "", "")
 start_link(PoolName, NumCon) ->
@@ -207,9 +210,11 @@ store(PoolPid, Op, Key, Value, TranscoderOpts, Exp, Cas) ->
 mget(PoolPid, Keys, Exp) ->
     execute(PoolPid, {mget, Keys, Exp, 0}).
 
--spec mget(pid(), [key()], integer(), tuple()) -> list().
 mget(PoolPid, Keys, Exp, {trans, TranscoderOpts}) ->
-    execute(PoolPid, {mget, Keys, Exp, 0, {trans, cberl_transcoder:flag(TranscoderOpts)}}).
+    execute(PoolPid, {mget, Keys, Exp, 0, {trans, cberl_transcoder:flag(TranscoderOpts)}});
+
+mget(PoolPid, Keys, Exp, Type) ->
+    execute(PoolPid, {mget, Keys, Exp, 0, Type}).
 
 %% @doc Get an item with a lock that has a timeout
 %% Instance libcouchbase instance to use
@@ -405,3 +410,58 @@ remove_design_doc(PoolPid, DocName) ->
     Path = string:join(["_design", DocName], "/"),
     {ok, _, _} = http(PoolPid, Path, "", "application/json", delete, view),
     ok.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% QUEUE OPERATIONS %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% @equiv lenqueue(PoolPid, Key, Exp, Value, standard)
+-spec lenqueue(pid(), key(), integer(), integer()) -> ok | {error, _}.
+lenqueue(PoolPid, Key, Exp, Value) ->
+    BinValue = <<Value:64/unsigned-integer>>,
+    store(PoolPid, lenqueue, Key, BinValue, transparent, Exp, 0).
+
+%% @equiv lremove(PoolPid, Key, Exp, Value, standard)
+-spec lremove(pid(), key(), integer(), integer()) -> ok | {error, _}.
+lremove(PoolPid, Key, Exp, Value) ->
+    BinValue = <<Value:64/unsigned-integer>>,
+    store(PoolPid, lremove, Key, BinValue, transparent, Exp, 0).
+
+%% @equiv ldequeue(PoolPid, Key, Exp, standard)
+-spec ldequeue(pid(), key(), integer()) -> ok | {error, _}.
+ldequeue(PoolPid, Key, Exp) ->
+    hd(mget(PoolPid, [Key], Exp, ?'CBE_LDEQUEUE')).
+
+%% @equiv lget(PoolPid, Key)
+-spec lget(pid(), key()) -> ok | {error, _}.
+lget(PoolPid, Key) ->
+    hd(mget(PoolPid, [Key], 0, ?'CBE_LGET')).
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SETS OPERATIONS %%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% @equiv sadd(PoolPid, Key, Exp, Value, standard)
+-spec sadd(pid(), key(), integer(), integer()) -> ok | {error, _}.
+sadd(PoolPid, Key, Exp, Value) ->
+    BinValue = <<Value:64/unsigned-integer>>,
+    store(PoolPid, sadd, Key, BinValue, transparent, Exp, 0).
+
+%% @equiv sremove(PoolPid, Key, Exp, Value, standard)
+-spec sremove(pid(), key(), integer(), integer()) -> ok | {error, _}.
+sremove(PoolPid, Key, Exp, Value) ->
+    BinValue = <<Value:64/unsigned-integer>>,
+    store(PoolPid, sremove, Key, BinValue, transparent, Exp, 0).
+
+%% @equiv sismember(PoolPid, Key, Exp, Value, standard)
+-spec sismember(pid(), key(), integer(), integer()) -> ok | {error, _}.
+sismember(PoolPid, Key, Exp, Value) ->
+    BinValue = <<Value:64/unsigned-integer>>,
+    store(PoolPid, sismember, Key, BinValue, transparent, Exp, 0).
+
+%% @equiv sget(PoolPid, Key)
+-spec sget(pid(), key()) -> ok | {error, _}.
+sget(PoolPid, Key) ->
+    hd(mget(PoolPid, [Key], 0, ?'CBE_SGET')).
+

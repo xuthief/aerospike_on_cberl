@@ -200,6 +200,7 @@ void* cb_mget_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     
     if (!enif_get_int(env, argv[1], &args->exp)) goto error1;
     if (!enif_get_int(env, argv[2], &args->lock)) goto error1;
+    if (!enif_get_int(env, argv[3], &args->gettype)) goto error1;
 
     free(currKey);
 
@@ -237,6 +238,7 @@ ERL_NIF_TERM cb_mget(ErlNifEnv* env, handle_t* handle, void* obj)
     size_t* nkeys = args->nkeys;
     int exp = args->exp;
     int lock = args->lock;
+    int gettype = args->gettype;
     int i = 0;
 
     cb.currKey = 0;
@@ -252,6 +254,7 @@ ERL_NIF_TERM cb_mget(ErlNifEnv* env, handle_t* handle, void* obj)
       get->v.v0.nkey = nkeys[i];
       get->v.v0.exptime = exp;
       get->v.v0.lock = lock;
+      get->v.v0.gettype = gettype;
       commands[i] = get;
     }
 
@@ -436,7 +439,7 @@ ERL_NIF_TERM cb_mtouch(ErlNifEnv* env, handle_t* handle, void* obj)
     i = 0; 
     for(; i < args->numkeys; i++) {
         enif_alloc_binary(cb.ret[i]->nkey, &key_binary);
-        memcpy(key_binary.data, cb.ret[i]->key, cb.ret[i]->nkey);
+        memcpy(key_binary.data, cb.ret[i]->data, cb.ret[i]->size);
         ERL_NIF_TERM key = enif_make_binary(env, &key_binary);
         if (cb.ret[i]->error == LCB_SUCCESS) {
             results[i] = enif_make_tuple2(env,
