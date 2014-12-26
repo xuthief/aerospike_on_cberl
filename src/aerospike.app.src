@@ -1,4 +1,4 @@
-{application, cberl,
+{application, aerospike,
  [
   {description, ""},
   {vsn, "1"},
@@ -9,6 +9,6 @@
                   poolboy,
                   jiffy
                  ]},
-  {mod, { cberl_app, []}},
+  {mod, { aerospike_app, []}},
   {env, []}
  ]}.

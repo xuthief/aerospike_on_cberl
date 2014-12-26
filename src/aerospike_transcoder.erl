@@ -1,6 +1,6 @@
--module(cberl_transcoder).
+-module(aerospike_transcoder).
 -export([encode_value/2, decode_value/2, flag/1]).
--include("cberl.hrl").
+-include("aerospike.hrl").
 
 -define('CBE_TRA',      16#0000).
 -define('CBE_JSON',     16#0002).

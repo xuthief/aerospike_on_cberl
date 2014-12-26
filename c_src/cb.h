@@ -2,7 +2,7 @@
 #define CB_H
 
 #include "erl_nif.h"
-#include "cberl.h"
+#include "aerospike.h"
 
 typedef struct connect_args {
     char* host;

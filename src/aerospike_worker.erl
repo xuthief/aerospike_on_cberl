@@ -1,6 +1,6 @@
--module(cberl_worker).
+-module(aerospike_worker).
 -behaviour(poolboy_worker).
--include("cberl.hrl").
+-include("aerospike.hrl").
 -behaviour(gen_server).
 
 %% API
@@ -46,8 +46,8 @@ start_link(Args) ->
 init([{host, Host}, {username, Username}, {password, Password},
       {bucketname, BucketName}, {transcoder, Transcoder}]) ->
     process_flag(trap_exit, true),
-    {ok, Handle} = cberl_nif:new(),
-    ok = cberl_nif:control(Handle, op(connect), [Host, Username, Password, BucketName]),
+    {ok, Handle} = aerospike_nif:new(),
+    ok = aerospike_nif:control(Handle, op(connect), [Host, Username, Password, BucketName]),
     receive
         ok -> {ok, #instance{handle = Handle,
                              transcoder = Transcoder,
@@ -72,20 +72,20 @@ init([{host, Host}, {username, Username}, {password, Password},
 %%--------------------------------------------------------------------
 handle_call({mtouch, Keys, ExpTimesE}, _From, 
             State = #instance{handle = Handle}) ->
-    ok = cberl_nif:control(Handle, op(mtouch), [Keys, ExpTimesE]),
+    ok = aerospike_nif:control(Handle, op(mtouch), [Keys, ExpTimesE]),
     receive
         Reply -> {reply, Reply, State}
     end;
 handle_call({unlock, Key, Cas}, _From, 
             State = #instance{handle = Handle}) ->
-    cberl_nif:control(Handle, op(unlock), [Key, Cas]),
+    aerospike_nif:control(Handle, op(unlock), [Key, Cas]),
     receive
         Reply -> {reply, Reply, State}
     end;
 handle_call({store, Op, Key, Value, TranscoderOpts, Exp, Cas}, _From, 
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
     StoreValue = Transcoder:encode_value(TranscoderOpts, Value), 
-    ok = cberl_nif:control(Handle, op(store), [operation_value(Op), Key, StoreValue, 
+    ok = aerospike_nif:control(Handle, op(store), [operation_value(Op), Key, StoreValue, 
                            Transcoder:flag(TranscoderOpts), Exp, Cas]),
     receive
         Reply -> {reply, Reply, State}
@@ -94,7 +94,7 @@ handle_call({store, Op, Key, Value, TranscoderOpts, Exp, Cas}, _From,
 
 handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
     State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
+    ok = aerospike_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
     Reply = receive
                 {error, Error} -> {error, Error};
                 {ok, Results} ->
@@ -112,7 +112,7 @@ handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
 
 handle_call({mget, Keys, Exp, Lock, Type}, _From, 
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock, Type]),
+    ok = aerospike_nif:control(Handle, op(mget), [Keys, Exp, Lock, Type]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, Results} ->
@@ -139,7 +139,7 @@ handle_call({mget, Keys, Exp, Lock, Type}, _From,
 
 handle_call({mget, Keys, Exp, Lock}, _From, 
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = cberl_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
+    ok = aerospike_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, Results} ->
@@ -156,7 +156,7 @@ handle_call({mget, Keys, Exp, Lock}, _From,
     {reply, Reply, State};
 handle_call({arithmetic, Key, OffSet, Exp, Create, Initial}, _From,
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = cberl_nif:control(Handle, op(arithmetic), [Key, OffSet, Exp, Create, Initial]),
+    ok = aerospike_nif:control(Handle, op(arithmetic), [Key, OffSet, Exp, Create, Initial]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, {Cas, Flag, Value}} ->
@@ -166,13 +166,13 @@ handle_call({arithmetic, Key, OffSet, Exp, Create, Initial}, _From,
     {reply, Reply, State};
 handle_call({remove, Key, N}, _From,
             State = #instance{handle = Handle}) ->
-    ok = cberl_nif:control(Handle, op(remove), [Key, N]),
+    ok = aerospike_nif:control(Handle, op(remove), [Key, N]),
     receive
         Reply -> {reply, Reply, State}
     end;
 handle_call({http, Path, Body, ContentType, Method, Chunked}, _From,
             State = #instance{handle = Handle}) ->
-    ok = cberl_nif:control(Handle, op(http), [Path, Body, ContentType, Method, Chunked]),
+    ok = aerospike_nif:control(Handle, op(http), [Path, Body, ContentType, Method, Chunked]),
     receive
         Reply -> {reply, Reply, State}
     end;
@@ -220,7 +220,7 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State = #instance{handle = Handle}) ->
-    cberl_nif:destroy(Handle),
+    aerospike_nif:destroy(Handle),
     ok.
 
 %%--------------------------------------------------------------------

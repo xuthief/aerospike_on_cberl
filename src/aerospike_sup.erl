@@ -1,5 +1,5 @@
 
--module(cberl_sup).
+-module(aerospike_sup).
 
 -behaviour(supervisor).
 

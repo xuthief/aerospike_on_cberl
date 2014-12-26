@@ -1,8 +1,8 @@
--module(cberl_queue_tests).
+-module(aerospike_queue_tests).
 -include_lib("eunit/include/eunit.hrl").
 -define(POOLNAME, testpool).
 
-cberl_test_() ->
+aerospike_test_() ->
     [{foreach, fun setup/0, fun clean_up/1,
       [
        fun test_lenqueue/1
@@ -16,14 +16,14 @@ cberl_test_() ->
 %%%===================================================================
 
 setup() ->
-    cberl:start_link(?POOLNAME, 3),
-   %cberl:remove(?POOLNAME, <<"testkey">>),
-   %cberl:remove(?POOLNAME, <<"testkey1">>),
-   %cberl:remove(?POOLNAME, <<"testkey2">>),
+    aerospike:start_link(?POOLNAME, 3),
+   %aerospike:remove(?POOLNAME, <<"testkey">>),
+   %aerospike:remove(?POOLNAME, <<"testkey1">>),
+   %aerospike:remove(?POOLNAME, <<"testkey2">>),
     ok.
 
 clean_up(_) ->
-    cberl:stop(?POOLNAME).
+    aerospike:stop(?POOLNAME).
 
 %%%===================================================================
 %%% Tests
@@ -33,14 +33,14 @@ test_lenqueue(_) ->
     Key = <<"testkey">>,
     Key2 = <<"testkey2">>,
     Value = 1,
-    ok = cberl:lenqueue(?POOLNAME, Key, 0, Value),
-    Get1 = cberl:lget(?POOLNAME, Key),
-    ok = cberl:lenqueue(?POOLNAME, Key, 0, Value),
-    Get2 = cberl:lget(?POOLNAME, Key),
+    ok = aerospike:lenqueue(?POOLNAME, Key, 0, Value),
+    Get1 = aerospike:lget(?POOLNAME, Key),
+    ok = aerospike:lenqueue(?POOLNAME, Key, 0, Value),
+    Get2 = aerospike:lget(?POOLNAME, Key),
     Value2 = 2,
-    ok = cberl:lenqueue(?POOLNAME, Key, 0, Value2),
-    Get3 = cberl:lget(?POOLNAME, Key),
-    GetFail = cberl:lget(?POOLNAME, Key2),
+    ok = aerospike:lenqueue(?POOLNAME, Key, 0, Value2),
+    Get3 = aerospike:lget(?POOLNAME, Key),
+    GetFail = aerospike:lget(?POOLNAME, Key2),
     [?_assertMatch({Key, _, [Value]}, Get1)
      ,?_assertMatch({Key, _, [Value, Value]}, Get2)
      ,?_assertMatch({Key, _, [Value, Value, Value2]}, Get3)
@@ -52,9 +52,9 @@ test_ldequeue(_) ->
     Value = 1,
     Key2 = <<"testkey2">>,
     Value2 = 2,
-    DequeueValue = cberl:ldequeue(?POOLNAME, Key, 0),
-    DequeueFail = cberl:ldequeue(?POOLNAME, Key2, 0),
-    Get1 = cberl:lget(?POOLNAME, Key),
+    DequeueValue = aerospike:ldequeue(?POOLNAME, Key, 0),
+    DequeueFail = aerospike:ldequeue(?POOLNAME, Key2, 0),
+    Get1 = aerospike:lget(?POOLNAME, Key),
     [
      ?_assertMatch({Key, _, 1}, DequeueValue)
      ,?_assertMatch({Key, _, [Value, Value2]}, Get1)
@@ -66,13 +66,13 @@ test_lremove(_) ->
     Key2 = <<"testkey2">>,
     Value = 1,
     Value2 = 2,
-    ok = cberl:lremove(?POOLNAME, Key, 0, Value2),
-    ok = cberl:lremove(?POOLNAME, Key, 0, Value2),
-    Get1 = cberl:lget(?POOLNAME, Key),
-    ok = cberl:lremove(?POOLNAME, Key, 0, Value),
-    Get2 = cberl:lget(?POOLNAME, Key),
-    RemoveFail = cberl:lremove(?POOLNAME, Key, 0, Value),
-    RemoveFail2 = cberl:lremove(?POOLNAME, Key2, 0, Value),
+    ok = aerospike:lremove(?POOLNAME, Key, 0, Value2),
+    ok = aerospike:lremove(?POOLNAME, Key, 0, Value2),
+    Get1 = aerospike:lget(?POOLNAME, Key),
+    ok = aerospike:lremove(?POOLNAME, Key, 0, Value),
+    Get2 = aerospike:lget(?POOLNAME, Key),
+    RemoveFail = aerospike:lremove(?POOLNAME, Key, 0, Value),
+    RemoveFail2 = aerospike:lremove(?POOLNAME, Key2, 0, Value),
     [?_assertMatch({Key, _, [Value]}, Get1),
      ?_assertEqual({error, key_enoent}, RemoveFail),
      ?_assertEqual({error, key_enoent}, RemoveFail2),

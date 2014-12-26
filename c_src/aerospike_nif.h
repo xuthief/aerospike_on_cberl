@@ -2,7 +2,7 @@
 #define CBERL_NIF_H
 
 #include "erl_nif.h"
-#include "cberl.h"
+#include "aerospike.h"
 
 // Command enum
 #define CMD_CONNECT     0

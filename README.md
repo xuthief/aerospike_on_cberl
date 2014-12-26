@@ -1,7 +1,7 @@
 CBERL
 ====
 
-[![Build Status](https://travis-ci.org/chitika/cberl.svg?branch=master)](https://travis-ci.org/chitika/cberl)
+[![Build Status](https://travis-ci.org/chitika/aerospike.svg?branch=master)](https://travis-ci.org/chitika/aerospike)
 
 NIF based Erlang bindings for couchbase based on libcouchbase. 
 CBERL is at early stage of development, it only supports very basic functionality. Please submit bugs and patches if you find any.
@@ -26,8 +26,8 @@ For installing libcouchbase on other systems visit http://www.couchbase.com/deve
 
 Then:
 
-    git clone git@github.com:chitika/cberl.git
-    cd cberl
+    git clone git@github.com:chitika/aerospike.git
+    cd aerospike
     ### assuming you have rebar in your path
     rebar get-deps compile
 
@@ -37,27 +37,27 @@ Or just include it as a dependency in your rebar config.
 Example
 -------
 
-Make sure you have couchbase running on localhost or use cberl:new(Host) instead.
+Make sure you have couchbase running on localhost or use aerospike:new(Host) instead.
 
-    %% create a connection pool  of 5 connections named cberl_default
+    %% create a connection pool  of 5 connections named aerospike_default
     %% you can provide more argument like host, username, password, 
-    %% bucket and transcoder - look at [cberl.erl](https://github.com/wcummings/cberl/blob/master/src/cberl.erl) for more detail 
-    cberl:start_link(cberl_default, 5).
+    %% bucket and transcoder - look at [aerospike.erl](https://github.com/wcummings/aerospike/blob/master/src/aerospike.erl) for more detail 
+    aerospike:start_link(aerospike_default, 5).
     {ok, <0.33.0>}
     %% Poolname, Key, Expire - 0 for infinity, Value
-    cberl:set(cberl_default, <<"fkey">>, 0, <<"cberl">>).
+    aerospike:set(aerospike_default, <<"fkey">>, 0, <<"aerospike">>).
     ok
-    cberl:get(cberl_default, <<"fkey">>).
-    {<<"fkey">>, ReturnedCasValue, <<"cberl">>}
+    aerospike:get(aerospike_default, <<"fkey">>).
+    {<<"fkey">>, ReturnedCasValue, <<"aerospike">>}
 
 For more information on all the functions -> ./rebar doc (most of documentation is out of date right now)
 
 Views
 -----
 
-cberl has new (experimental) support for querying views via the view/4 functions:
+aerospike has new (experimental) support for querying views via the view/4 functions:
 
-    cberl:view(default, "all", "all", []).
+    aerospike:view(default, "all", "all", []).
     {ok,{1,
      [[{<<"id">>,<<"test">>},
        {<<"key">>,<<"test">>},
@@ -82,12 +82,12 @@ __flag/1:__
 
 Turns an encoder_name (or list of them) into an integer. This value is sent to CB during set operations and this is what you get in decode value. You must return a value for 'standart' encoder if you are not planning to specify an encoder for every set operation.
 
-Check out [cberl_transcoder.erl](https://github.com/wcummings/cberl/blob/master/src/cberl_transcoder.erl) it is pretty straightforward.
+Check out [aerospike_transcoder.erl](https://github.com/wcummings/aerospike/blob/master/src/aerospike_transcoder.erl) it is pretty straightforward.
 
 Performance
 -------
 
-I included [results](https://github.com/wcummings/cberl/blob/master/bench/macmini_cberl_new.png) of [basho_bench](http://docs.basho.com/riak/latest/cookbooks/Benchmarking/) which I ran on my mac. It is the results of 100 processes using a pool of 5 connections. I included basha_bench driver and config file under bench. Please tweak the config file for your requirement and run your own benchmarks.
+I included [results](https://github.com/wcummings/aerospike/blob/master/bench/macmini_aerospike_new.png) of [basho_bench](http://docs.basho.com/riak/latest/cookbooks/Benchmarking/) which I ran on my mac. It is the results of 100 processes using a pool of 5 connections. I included basha_bench driver and config file under bench. Please tweak the config file for your requirement and run your own benchmarks.
 
 TODO
 ----

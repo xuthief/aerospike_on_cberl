@@ -1,8 +1,8 @@
--module(cberl_view_tests).
+-module(aerospike_view_tests).
 -include_lib("eunit/include/eunit.hrl").
 -define(POOLNAME, testpool).
 
-cberl_view_test_() ->
+aerospike_view_test_() ->
     [{foreach, fun setup/0, fun clean_up/1,
       [fun test_set_design_doc/1,
        fun test_remove_design_doc/1,
@@ -14,8 +14,8 @@ cberl_view_test_() ->
 %%%===================================================================
 
 setup() ->
-    cberl:start_link(?POOLNAME, 3),
-    cberl:set_design_doc(?POOLNAME, "test-design-doc",
+    aerospike:start_link(?POOLNAME, 3),
+    aerospike:set_design_doc(?POOLNAME, "test-design-doc",
                          {[{<<"views">>,
                             {[{<<"test-view">>,
                                {[{<<"map">>, <<"function(doc,meta){}">>}]}
@@ -24,7 +24,7 @@ setup() ->
     ok.
 
 clean_up(_) ->
-    cberl:stop(?POOLNAME).
+    aerospike:stop(?POOLNAME).
 
 %%%===================================================================
 %%% Tests
@@ -32,7 +32,7 @@ clean_up(_) ->
 test_query_view(_) ->
     DocName = "test-set-design-doc",
     ViewName = "test-view",
-    [?_assertMatch({ok, {0, []}}, cberl:view(?POOLNAME, DocName, ViewName, []))].
+    [?_assertMatch({ok, {0, []}}, aerospike:view(?POOLNAME, DocName, ViewName, []))].
 
 test_set_design_doc(_) ->
     DocName = "test-set-design-doc",
@@ -43,14 +43,14 @@ test_set_design_doc(_) ->
                      }]}
                   }]},
     fun () ->
-        [?assertEqual(ok, cberl:set_design_doc(?POOLNAME, DocName, DesignDoc)),
-         ?assertMatch({ok, _}, cberl:view(?POOLNAME, DocName, ViewName, []))]
+        [?assertEqual(ok, aerospike:set_design_doc(?POOLNAME, DocName, DesignDoc)),
+         ?assertMatch({ok, _}, aerospike:view(?POOLNAME, DocName, ViewName, []))]
     end.
 
 test_remove_design_doc(_) ->
     DocName = "test-design-doc",
     ViewName = "test-view",
     fun () ->
-        [?assertEqual(ok, cberl:remove_design_doc(?POOLNAME, DocName)),
-         ?assertMatch({error, _}, cberl:view(?POOLNAME, DocName, ViewName, []))]
+        [?assertEqual(ok, aerospike:remove_design_doc(?POOLNAME, DocName)),
+         ?assertMatch({error, _}, aerospike:view(?POOLNAME, DocName, ViewName, []))]
     end.

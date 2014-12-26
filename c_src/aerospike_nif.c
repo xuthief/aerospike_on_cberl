@@ -1,26 +1,26 @@
 #include <string.h>
 #include <stdio.h>
-#include "cberl.h"
-#include "cberl_nif.h"
+#include "aerospike.h"
+#include "aerospike_nif.h"
 #include "cb.h"
 
-static ErlNifResourceType* cberl_handle = NULL;
+static ErlNifResourceType* aerospike_handle = NULL;
 
-static void cberl_handle_cleanup(ErlNifEnv* env, void* arg) {}
+static void aerospike_handle_cleanup(ErlNifEnv* env, void* arg) {}
 
 static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
     ErlNifResourceFlags flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
-    cberl_handle =  enif_open_resource_type(env, "cberl_nif",
-                                                 "cberl_handle",
-                                                 &cberl_handle_cleanup,
+    aerospike_handle =  enif_open_resource_type(env, "aerospike_nif",
+                                                 "aerospike_handle",
+                                                 &aerospike_handle_cleanup,
                                                  flags, 0);
     return 0;
 }
 
-NIF(cberl_nif_new)
+NIF(aerospike_nif_new)
 {
-    handle_t* handle = enif_alloc_resource(cberl_handle, sizeof(handle_t));
+    handle_t* handle = enif_alloc_resource(aerospike_handle, sizeof(handle_t));
     handle->queue = queue_new();
 
     handle->calltable[CMD_CONNECT]         = cb_connect;
@@ -49,11 +49,11 @@ NIF(cberl_nif_new)
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_resource(env, handle));
 }
 
-NIF(cberl_nif_control)
+NIF(aerospike_nif_control)
 {
     handle_t* handle;
 
-    assert_badarg(enif_get_resource(env, argv[0], cberl_handle, (void **) &handle), env);
+    assert_badarg(enif_get_resource(env, argv[0], aerospike_handle, (void **) &handle), env);
 
     unsigned int len;
     enif_get_atom_length(env, argv[1], &len, ERL_NIF_LATIN1);
@@ -105,10 +105,10 @@ NIF(cberl_nif_control)
     return A_OK(env);
 }
 
-NIF(cberl_nif_destroy) {
+NIF(aerospike_nif_destroy) {
     handle_t * handle;
     void* resp;
-    assert_badarg(enif_get_resource(env, argv[0], cberl_handle, (void **) &handle), env);      
+    assert_badarg(enif_get_resource(env, argv[0], aerospike_handle, (void **) &handle), env);      
     queue_put(handle->queue, NULL); // push NULL into our queue so the thread will join
     enif_thread_join(handle->thread, &resp);
     queue_destroy(handle->queue);
@@ -138,9 +138,9 @@ static void* worker(void *obj)
 }
 
 static ErlNifFunc nif_funcs[] = {
-    {"new", 0, cberl_nif_new},
-    {"control", 3, cberl_nif_control},
-    {"destroy", 1, cberl_nif_destroy}
+    {"new", 0, aerospike_nif_new},
+    {"control", 3, aerospike_nif_control},
+    {"destroy", 1, aerospike_nif_destroy}
 };
 
-ERL_NIF_INIT(cberl_nif, nif_funcs, load, NULL, NULL, NULL);
+ERL_NIF_INIT(aerospike_nif, nif_funcs, load, NULL, NULL, NULL);

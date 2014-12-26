@@ -1,4 +1,4 @@
--module(cberl_app).
+-module(aerospike_app).
 
 -behaviour(application).
 
@@ -10,7 +10,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    cberl_sup:start_link().
+    aerospike_sup:start_link().
 
 stop(_State) ->
     ok.

@@ -1,4 +1,4 @@
--module(cberl_nif).
+-module(aerospike_nif).
 -export([new/0, control/3, destroy/1]).
 
 -on_load(init/0).
@@ -14,7 +14,7 @@ init() ->
                   Path ->
                       Path
               end,
-    erlang:load_nif(filename:join(PrivDir, "cberl_drv"), 0).
+    erlang:load_nif(filename:join(PrivDir, "aerospike_drv"), 0).
 
 new() ->
     ?NIF_STUB.

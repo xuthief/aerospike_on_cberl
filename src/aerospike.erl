@@ -2,8 +2,8 @@
 %%% @copyright 2012-2013 Chitika Inc.
 %%% @version 0.0.2
 
--module(cberl).
--include("cberl.hrl").
+-module(aerospike).
+-include("aerospike.hrl").
 
 -export([start_link/2, start_link/3, start_link/5, start_link/6, start_link/7]).
 -export([stop/1]).
@@ -46,16 +46,16 @@ start_link(PoolName, NumCon, Host, Username, Password) ->
 %% Username the username to use
 %% Password The password
 %% bucket The bucket to connect to
-%% @equiv start_link(PoolName, NumCon, Host, Username, Password, cberl_transcoder).
+%% @equiv start_link(PoolName, NumCon, Host, Username, Password, aerospike_transcoder).
 start_link(PoolName, NumCon, Host, Username, Password, BucketName) ->
-    start_link(PoolName, NumCon, Host, Username, Password, BucketName, cberl_transcoder).
+    start_link(PoolName, NumCon, Host, Username, Password, BucketName, aerospike_transcoder).
 
 -spec start_link(atom(), integer(), string(), string(), string(), string(), atom()) -> {ok, pid()} | {error, _}.
 start_link(PoolName, NumCon, Host, Username, Password, BucketName, Transcoder) ->
     SizeArgs = [{size, NumCon},
                 {max_overflow, 0}],
     PoolArgs = [{name, {local, PoolName}},
-                {worker_module, cberl_worker}] ++ SizeArgs,
+                {worker_module, aerospike_worker}] ++ SizeArgs,
     WorkerArgs = [{host, Host},
 		  {username, Username},
 		  {password, Password},
@@ -211,7 +211,7 @@ mget(PoolPid, Keys, Exp) ->
     execute(PoolPid, {mget, Keys, Exp, 0}).
 
 mget(PoolPid, Keys, Exp, {trans, TranscoderOpts}) ->
-    execute(PoolPid, {mget, Keys, Exp, 0, {trans, cberl_transcoder:flag(TranscoderOpts)}});
+    execute(PoolPid, {mget, Keys, Exp, 0, {trans, aerospike_transcoder:flag(TranscoderOpts)}});
 
 mget(PoolPid, Keys, Exp, Type) ->
     execute(PoolPid, {mget, Keys, Exp, 0, Type}).

@@ -6,3 +6,6 @@ priv
 *.beam
 *.plt
 erl_crash.dump
+.rebar
+tags
+c
