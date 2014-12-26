@@ -3,25 +3,25 @@ CBERL
 
 [![Build Status](https://travis-ci.org/chitika/aerospike.svg?branch=master)](https://travis-ci.org/chitika/aerospike)
 
-NIF based Erlang bindings for couchbase based on libcouchbase. 
+NIF based Erlang bindings for aerospike based on libaerospike. 
 CBERL is at early stage of development, it only supports very basic functionality. Please submit bugs and patches if you find any.
 Tested on mac, debian squeeze and amazon linux.
 
 Quick Setup/Start
 ---------
-First you must have libcouchbase installed. 
+First you must have libaerospike installed. 
 
 On mac install [homebrew](http://mxcl.github.com/homebrew/,"homebrew") if you haven't already then run:
 
-    brew install https://github.com/couchbase/homebrew/raw/stable/Library/Formula/libcouchbase.rb
+    brew install https://github.com/aerospike/homebrew/raw/stable/Library/Formula/libaerospike.rb
 
 On Amazon linux:
 
-    sudo wget -O/etc/yum.repos.d/couchbase.repo http://packages.couchbase.com/rpm/couchbase-centos62-x86_64.repo
+    sudo wget -O/etc/yum.repos.d/aerospike.repo http://packages.aerospike.com/rpm/aerospike-centos62-x86_64.repo
     sudo yum check-update
-    sudo yum install --enablerepo=epel libcouchbase2 libcouchbase-devel
+    sudo yum install --enablerepo=epel libaerospike2 libaerospike-devel
 
-For installing libcouchbase on other systems visit http://www.couchbase.com/develop/c/current.
+For installing libaerospike on other systems visit http://www.aerospike.com/develop/c/current.
 
 
 Then:
@@ -37,7 +37,7 @@ Or just include it as a dependency in your rebar config.
 Example
 -------
 
-Make sure you have couchbase running on localhost or use aerospike:new(Host) instead.
+Make sure you have aerospike running on localhost or use aerospike:new(Host) instead.
 
     %% create a connection pool  of 5 connections named aerospike_default
     %% you can provide more argument like host, username, password, 
@@ -76,7 +76,7 @@ Takes in an encoder|encoder list and the original value and turns it into a bina
 
 __decode_value/2:__
 
-Takes in a flag (from couchbase) and the value (as binary) and turns it into the actual value.
+Takes in a flag (from aerospike) and the value (as binary) and turns it into the actual value.
 
 __flag/1:__
 

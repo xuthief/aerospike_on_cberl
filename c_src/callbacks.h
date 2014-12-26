@@ -1,7 +1,7 @@
 #ifndef CALLBACKS_H
 #define CALLBACKS_H
 
-struct libcouchbase_callback {
+struct libaerospike_callback {
     lcb_error_t error;
     size_t size;
     void *data;
@@ -11,14 +11,14 @@ struct libcouchbase_callback {
     lcb_cas_t cas;
 };
 
-struct libcouchbase_callback_http {
+struct libaerospike_callback_http {
     lcb_http_status_t status;
-    struct libcouchbase_callback ret;
+    struct libaerospike_callback ret;
 };
 
-struct libcouchbase_callback_m {
+struct libaerospike_callback_m {
     int currKey;
-    struct libcouchbase_callback** ret;
+    struct libaerospike_callback** ret;
 };
 
 void error_callback(lcb_t instance,

@@ -1,4 +1,4 @@
-#include <libcouchbase/couchbase.h>
+#include <libaerospike/aerospike.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -141,7 +141,7 @@ ERL_NIF_TERM cb_store(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     store_args_t* args = (store_args_t*)obj;
 
-    struct libcouchbase_callback cb;
+    struct libaerospike_callback cb;
 
     lcb_error_t ret;
 
@@ -225,7 +225,7 @@ ERL_NIF_TERM cb_mget(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     mget_args_t* args = (mget_args_t*)obj;
 
-    struct libcouchbase_callback_m cb; 
+    struct libaerospike_callback_m cb; 
 
     lcb_error_t ret;
     
@@ -242,7 +242,7 @@ ERL_NIF_TERM cb_mget(ErlNifEnv* env, handle_t* handle, void* obj)
     int i = 0;
 
     cb.currKey = 0;
-    cb.ret = malloc(sizeof(struct libcouchbase_callback*) * numkeys);
+    cb.ret = malloc(sizeof(struct libaerospike_callback*) * numkeys);
 
 
     const lcb_get_cmd_t* commands[numkeys];
@@ -327,7 +327,7 @@ ERL_NIF_TERM cb_unlock(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     unlock_args_t* args = (unlock_args_t*)obj;
 
-    struct libcouchbase_callback cb; 
+    struct libaerospike_callback cb; 
 
     lcb_error_t ret;
          
@@ -405,7 +405,7 @@ ERL_NIF_TERM cb_mtouch(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     mtouch_args_t* args = (mtouch_args_t*)obj;
 
-    struct libcouchbase_callback_m cb; 
+    struct libaerospike_callback_m cb; 
     int i = 0;
     lcb_error_t ret;
     
@@ -415,7 +415,7 @@ ERL_NIF_TERM cb_mtouch(ErlNifEnv* env, handle_t* handle, void* obj)
     ErlNifBinary key_binary;
     
     cb.currKey = 0;
-    cb.ret = malloc(sizeof(struct libcouchbase_callback*) * args->numkeys);
+    cb.ret = malloc(sizeof(struct libaerospike_callback*) * args->numkeys);
 
     const lcb_touch_cmd_t* commands[args->numkeys];
     i = 0;
@@ -494,7 +494,7 @@ ERL_NIF_TERM cb_arithmetic(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     arithmetic_args_t* args = (arithmetic_args_t*)obj;
 
-    struct libcouchbase_callback cb; 
+    struct libaerospike_callback cb; 
 
     lcb_error_t ret; //for checking responses
     
@@ -548,7 +548,7 @@ ERL_NIF_TERM cb_remove(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     remove_args_t* args = (remove_args_t*)obj;
 
-    struct libcouchbase_callback cb; 
+    struct libaerospike_callback cb; 
 
     lcb_error_t ret; //for checking responses
 
@@ -616,7 +616,7 @@ ERL_NIF_TERM cb_http(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     http_args_t* args = (http_args_t*)obj;
 
-    struct libcouchbase_callback_http cb;
+    struct libaerospike_callback_http cb;
     lcb_error_t ret;
     lcb_http_request_t req;
 
@@ -706,8 +706,8 @@ ERL_NIF_TERM return_lcb_error(ErlNifEnv* env, int const value) {
 }
 
 ERL_NIF_TERM return_value(ErlNifEnv* env, void * cookie) {
-    struct libcouchbase_callback *cb;
-    cb = (struct libcouchbase_callback *)cookie;
+    struct libaerospike_callback *cb;
+    cb = (struct libaerospike_callback *)cookie;
     ErlNifBinary value_binary;
     ERL_NIF_TERM term;
     enif_alloc_binary(cb->size, &value_binary);

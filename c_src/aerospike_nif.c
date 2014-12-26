@@ -39,6 +39,14 @@ NIF(aerospike_nif_new)
     handle->args_calltable[CMD_REMOVE]     = cb_remove_args;
     handle->calltable[CMD_HTTP]            = cb_http;
     handle->args_calltable[CMD_HTTP]       = cb_http_args;
+    handle->calltable[LSET_ADD]            = cb_lset_add;
+    handle->args_calltable[LSET_ADD]       = cb_lset_add_args;
+    handle->calltable[LSET_REMOVE]         = cb_lset_remove;
+    handle->args_calltable[LSET_REMOVE]    = cb_lset_remove_args;
+    handle->calltable[LSET_GET]            = cb_lset_get;
+    handle->args_calltable[LSET_GET]       = cb_lset_get_args;
+    handle->calltable[LSET_SIZE]           = cb_lset_size;
+    handle->args_calltable[LSET_SIZE]      = cb_lset_size_args;
 
     handle->thread_opts = enif_thread_opts_create("thread_opts");
 

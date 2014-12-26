@@ -7,7 +7,7 @@ otp_release:
   - R16B01
   - R16B
 before_script:
-  - sudo wget -O /etc/apt/sources.list.d/couchbase.list http://packages.couchbase.com/ubuntu/couchbase-ubuntu1204.list
+  - sudo wget -O /etc/apt/sources.list.d/aerospike.list http://packages.aerospike.com/ubuntu/aerospike-ubuntu1204.list
   - sudo apt-get update
-  - sudo apt-get install libcouchbase2-libevent libcouchbase-dev --force-yes
+  - sudo apt-get install libaerospike2-libevent libaerospike-dev --force-yes
 script: ./rebar compile && ./rebar skip_deps=true tests=aerospike_transcoder_test eunit 

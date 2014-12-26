@@ -6,9 +6,9 @@
 
 typedef struct connect_args {
     char* host;
+    int   port;
     char* user;
     char* pass;
-    char* bucket;
 } connect_args_t;
 
 typedef struct store_args {
@@ -66,6 +66,21 @@ typedef struct http_args {
     char *content_type;
     lcb_http_type_t type;
 } http_args_t;
+
+typedef struct key_args {
+    char *ns;
+    char *set;
+    char *key;
+} key_args_t;
+
+typedef struct ldt_store_args {
+    key_args_t key_args;
+    char *ldt;
+    void *bytes;
+    int      nbytes;
+    int timeout;
+} store_args_t;
+
 
 void* cb_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM cb_connect(ErlNifEnv* env, handle_t* handle, void* obj);

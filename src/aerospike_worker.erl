@@ -43,15 +43,12 @@ start_link(Args) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([{host, Host}, {username, Username}, {password, Password},
-      {bucketname, BucketName}, {transcoder, Transcoder}]) ->
+init([{host, Host}, {port, Port}, {username, Username}, {password, Password}]) ->
     process_flag(trap_exit, true),
     {ok, Handle} = aerospike_nif:new(),
-    ok = aerospike_nif:control(Handle, op(connect), [Host, Username, Password, BucketName]),
+    ok = aerospike_nif:control(Handle, op(connect), [Host, Port, Username, Password]),
     receive
-        ok -> {ok, #instance{handle = Handle,
-                             transcoder = Transcoder,
-                             bucketname = canonical_bucket_name(BucketName)}};
+        ok -> {ok, #instance{handle = Handle}};
         {error, Error} -> {stop, Error}
     end.
 
@@ -100,7 +97,7 @@ handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
                 {ok, Results} ->
                     lists:map(fun(Result) ->
                         case Result of
-                            {Cas, _Flag, Key, Value} ->  %% won't use Flag from couchbase bucket
+                            {Cas, _Flag, Key, Value} ->  %% won't use Flag from aerospike bucket
                                 DecodedValue = Transcoder:decode_value(Flag, Value),
                                 {Key, Cas, DecodedValue};
                             {_Key, {error, _Error}} ->
@@ -119,17 +116,8 @@ handle_call({mget, Keys, Exp, Lock, Type}, _From,
             lists:map(fun(Result) ->
                         case Result of
                             {Cas, Flag, Key, Value} ->
-                                case Type of
-                                    ?'CBE_LGET' ->
-                                        {Key, Cas, binary_to_uint64_list(Value)};
-                                    ?'CBE_LDEQUEUE' ->
-                                        {Key, Cas, binary_to_uint64(Value)};
-                                    ?'CBE_SGET' ->
-                                        {Key, Cas, binary_to_uint64_list(Value)};
-                                    _ ->
                                         DecodedValue = Transcoder:decode_value(Flag, Value),
-                                        {Key, Cas, DecodedValue}
-                                end;
+                                        {Key, Cas, DecodedValue};
                             {_Key, {error, _Error}} ->
                                 Result
                         end
@@ -176,6 +164,46 @@ handle_call({http, Path, Body, ContentType, Method, Chunked}, _From,
     receive
         Reply -> {reply, Reply, State}
     end;
+
+handle_call({lset_add, NS, Set, Key, Ldt, Value, Timeout}, 
+            _From, 
+            State = #instance{handle = Handle}) ->
+    ok = aerospike_nif:control(Handle, op(lset_add), [
+                NS, Set, Key, Ldt, Value, Timeout]),
+    receive
+        Reply -> {reply, Reply, State}
+    end;
+
+handle_call({lset_remove, NS, Set, Key, Ldt, Value, Timeout}, 
+            _From, 
+            State = #instance{handle = Handle}) ->
+    ok = aerospike_nif:control(Handle, op(lset_remove), [
+                NS, Set, Key, Ldt, Value, Timeout]),
+    receive
+        Reply -> {reply, Reply, State}
+    end;
+
+handle_call({lset_get, NS, Set, Key, Ldt, Timeout}, 
+            _From, 
+            State = #instance{handle = Handle}) ->
+    ok = aerospike_nif:control(Handle, op(lset_get), [
+                NS, Set, Key, Ldt, Timeout]),
+    receive
+        Reply -> {reply, Reply, State}
+    end;
+
+
+handle_call({lset_size, NS, Set, Key, Ldt, Timeout}, 
+            _From, 
+            State = #instance{handle = Handle}) ->
+    ok = aerospike_nif:control(Handle, op(lset_size), [
+                NS, Set, Key, Ldt, Timeout]),
+    receive
+        Reply -> {reply, Reply, State}
+    end;
+
+
+
 handle_call(bucketname, _From, State = #instance{bucketname = BucketName}) ->
     {reply, {ok, BucketName}, State};
 handle_call(_Request, _From, State) ->
@@ -246,9 +274,10 @@ operation_value(append) -> ?'CBE_APPEND';
 operation_value(prepend) -> ?'CBE_PREPEND';
 operation_value(lenqueue) -> ?'CBE_LENQUEUE';
 operation_value(lremove) -> ?'CBE_LREMOVE';
-operation_value(sadd) -> ?'CBE_SADD';
-operation_value(sremove) -> ?'CBE_SREMOVE';
-operation_value(sismember) -> ?'CBE_SISMEMBER'.
+operation_value(lset_add) -> ?'LSET_ADD';
+operation_value(lset_REMOVE) -> ?'LSET_REMOVE';
+operation_value(lset_GET) -> ?'LSET_GET';
+operation_value(lset_SIZE) -> ?'LSET_SIZE'.
 
 -spec op(atom()) -> integer().
 op(connect) -> ?'CMD_CONNECT';

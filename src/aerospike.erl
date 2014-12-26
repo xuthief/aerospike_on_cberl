@@ -5,7 +5,7 @@
 -module(aerospike).
 -include("aerospike.hrl").
 
--export([start_link/2, start_link/3, start_link/5, start_link/6, start_link/7]).
+-export([start_link/6]).
 -export([stop/1]).
 %store operations
 -export([add/4, add/5, replace/4, replace/5, set/4, set/5, store/7]).
@@ -23,44 +23,28 @@
 %queue opts
 -export([lenqueue/4, ldequeue/3, lremove/4, lget/2]).
 %sets opts
--export([sadd/4, sismember/4, sremove/4, sget/2]).
+-export([lset_add/7, lset_remove/7, lset_get/6, lset_size/6]).
 
-%% @equiv start_link(PoolName, NumCon, "localhost:8091", "", "", "")
-start_link(PoolName, NumCon) ->
-    start_link(PoolName, NumCon, "localhost:8091", "", "", "").
-
-%% @equiv start_link(PoolName, NumCon, Host, "", "", "")
-start_link(PoolName, NumCon, Host) ->
-    start_link(PoolName, NumCon, Host, "", "", "").
-
-%% @equiv start_link(PoolName, NumCon, Host, Username, Password, "")
-start_link(PoolName, NumCon, Host, Username, Password) ->
-    start_link(PoolName, NumCon, Host, Username, Password, "").
-
-%% @doc Create an instance of libcouchbase
+%% @doc Create an instance of libaerospike
 %% hosts A list of hosts:port separated by ';' to the
-%%      administration port of the couchbase cluster. (ex:
+%%      administration port of the aerospike cluster. (ex:
 %%      "host1;host2:9000;host3" would try to connect to
 %%      host1 on port 8091, if that fails it'll connect to
 %%      host2 on port 9000 etc).
 %% Username the username to use
 %% Password The password
 %% bucket The bucket to connect to
-%% @equiv start_link(PoolName, NumCon, Host, Username, Password, aerospike_transcoder).
-start_link(PoolName, NumCon, Host, Username, Password, BucketName) ->
-    start_link(PoolName, NumCon, Host, Username, Password, BucketName, aerospike_transcoder).
-
--spec start_link(atom(), integer(), string(), string(), string(), string(), atom()) -> {ok, pid()} | {error, _}.
-start_link(PoolName, NumCon, Host, Username, Password, BucketName, Transcoder) ->
+%% @equiv start_link(PoolName, NumCon, Host, Username, Password).
+-spec start_link(atom(), integer(), string(), integer(), string(), string()) -> {ok, pid()} | {error, _}.
+start_link(PoolName, NumCon, Host, Port, Username, Password) ->
     SizeArgs = [{size, NumCon},
                 {max_overflow, 0}],
     PoolArgs = [{name, {local, PoolName}},
                 {worker_module, aerospike_worker}] ++ SizeArgs,
     WorkerArgs = [{host, Host},
+		  {port, Port},
 		  {username, Username},
-		  {password, Password},
-		  {bucketname, BucketName},
-		  {transcoder, Transcoder}],
+		  {password, Password}],
     poolboy:start_link(PoolArgs, WorkerArgs).
 
 %%%%%%%%%%%%%%%%%%%%%%%%
@@ -110,7 +94,7 @@ prepend(PoolPid, Cas, Key, Value) ->
     store(PoolPid, prepend, Key, Value, str, 0, Cas).
 
 %% @doc Touch (set expiration time) on the given key
-%% PoolPid libcouchbase instance to use
+%% PoolPid libaerospike instance to use
 %% Key key to touch
 %% ExpTime a new expiration time for the item
 
@@ -178,7 +162,7 @@ unlock(PoolPid, Key, Cas) ->
     execute(PoolPid, {unlock, Key, Cas}).
 
 %% @doc main store function takes care of all storing
-%% Instance libcouchbase instance to use
+%% Instance libaerospike instance to use
 %% Op add | replace | set | append | prepend
 %%          add : Add the item to the cache, but fail if the object exists already
 %%          replace: Replace the existing object in the cache
@@ -201,7 +185,7 @@ store(PoolPid, Op, Key, Value, TranscoderOpts, Exp, Cas) ->
                        TranscoderOpts, Exp, Cas}).
 
 %% @doc get the value for the given key
-%% Instance libcouchbase instance to use
+%% Instance libaerospike instance to use
 %% HashKey the key to use for hashing
 %% Key the key to get
 %% Exp When the object should expire
@@ -217,7 +201,7 @@ mget(PoolPid, Keys, Exp, Type) ->
     execute(PoolPid, {mget, Keys, Exp, 0, Type}).
 
 %% @doc Get an item with a lock that has a timeout
-%% Instance libcouchbase instance to use
+%% Instance libaerospike instance to use
 %%  HashKey the key to use for hashing
 %%  Key the key to get
 %%  Exp When the lock should expire
@@ -226,7 +210,7 @@ getl(PoolPid, Key, Exp) ->
     execute(PoolPid, {mget, [Key], Exp, 1}).
 
 %% @doc perform an arithmetic operation on the given key
-%% Instance libcouchbase instance to use
+%% Instance libaerospike instance to use
 %% Key key to perform on
 %% Delta The amount to add / subtract
 %% Exp When the object should expire
@@ -239,14 +223,14 @@ arithmetic(PoolPid, Key, OffSet, Exp, Create, Initial) ->
     execute(PoolPid, {arithmetic, Key, OffSet, Exp, Create, Initial}).
 
 %% @doc remove the value for given key
-%% Instance libcouchbase instance to use
+%% Instance libaerospike instance to use
 %% Key key to  remove
 -spec remove(pid(), key()) -> ok | {error, _}.
 remove(PoolPid, Key) ->
     execute(PoolPid, {remove, Key, 0}).
 
 %% @doc flush all documents from the bucket
-%% Instance libcouchbase Instance to use
+%% Instance libaerospike Instance to use
 %% BucketName name of the bucket to flush
 -spec flush(pid(), string()) -> ok | {error, _}.
 flush(PoolPid, BucketName) ->
@@ -257,7 +241,7 @@ flush(PoolPid, BucketName) ->
     handle_flush_result(PoolPid, FlushMarker, Result).
 
 %% @doc flush all documents from the current bucket
-%% Instance libcouchbase Instance to use
+%% Instance libaerospike Instance to use
 -spec flush(pid()) -> ok | {error, _}.
 flush(PoolPid) ->
     {ok, BucketName} = execute(PoolPid, bucketname),
@@ -442,26 +426,28 @@ lget(PoolPid, Key) ->
 %%% SETS OPERATIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
-%% @equiv sadd(PoolPid, Key, Exp, Value, standard)
--spec sadd(pid(), key(), integer(), integer()) -> ok | {error, _}.
-sadd(PoolPid, Key, Exp, Value) ->
-    BinValue = <<Value:64/unsigned-integer>>,
-    store(PoolPid, sadd, Key, BinValue, transparent, Exp, 0).
+%% @equiv lset_add(PoolPid, NS, Set, Key, Ldt, Value)
+-spec lset_add(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
+lset_add(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
+    execute(PoolPid, {lset_add, NS, Set, Key, Ldt, 
+                      Value,
+                      Timeout}).
 
-%% @equiv sremove(PoolPid, Key, Exp, Value, standard)
--spec sremove(pid(), key(), integer(), integer()) -> ok | {error, _}.
-sremove(PoolPid, Key, Exp, Value) ->
-    BinValue = <<Value:64/unsigned-integer>>,
-    store(PoolPid, sremove, Key, BinValue, transparent, Exp, 0).
+%% @equiv lset_remove(PoolPid, NS, Set, Key, Ldt, Value)
+-spec lset_remove(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
+lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
+    execute(PoolPid, {lset_remove, NS, Set, Key, Ldt, 
+                      Value,
+                      Timeout}).
 
-%% @equiv sismember(PoolPid, Key, Exp, Value, standard)
--spec sismember(pid(), key(), integer(), integer()) -> ok | {error, _}.
-sismember(PoolPid, Key, Exp, Value) ->
-    BinValue = <<Value:64/unsigned-integer>>,
-    store(PoolPid, sismember, Key, BinValue, transparent, Exp, 0).
+%% @equiv lset_get(PoolPid, NS, Set, Key, Ldt)
+-spec lset_get(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
+lset_get(PoolPid, NS, Set, Key, Ldt, Timeout) ->
+    execute(PoolPid, {ldt_get, lset, NS, Set, Key, Ldt, 
+                      Timeout}).
 
-%% @equiv sget(PoolPid, Key)
--spec sget(pid(), key()) -> ok | {error, _}.
-sget(PoolPid, Key) ->
-    hd(mget(PoolPid, [Key], 0, ?'CBE_SGET')).
-
+%% @equiv lset_size(PoolPid, NS, Set, Key, Ldt)
+-spec lset_size(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
+lset_size(PoolPid, NS, Set, Key, Ldt, Timeout) ->
+    execute(PoolPid, {ldt_size, lset, NS, Set, Key, Ldt, 
+                      Timeout}).

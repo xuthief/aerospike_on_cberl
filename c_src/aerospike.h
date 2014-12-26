@@ -1,7 +1,7 @@
 #ifndef CBERL_H
 #define CBERL_H
 
-#include <libcouchbase/couchbase.h>
+#include <libaerospike/aerospike.h>
 #include "queue.h"
 #include "erl_nif.h"
 

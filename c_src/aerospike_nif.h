@@ -13,6 +13,11 @@
 #define CMD_ARITHMETIC  5
 #define CMD_REMOVE      6
 #define CMD_HTTP        7 
+#define LSET_ADD        8
+#define LSET_REMOVE     9
+#define LSET_GET        10
+#define LSET_SIZE       11
+
 
 typedef struct task {
     ErlNifPid* pid;

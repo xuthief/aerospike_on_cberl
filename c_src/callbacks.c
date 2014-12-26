@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <libcouchbase/couchbase.h>
+#include <libaerospike/aerospike.h>
 #include "erl_nif.h"
 #include "callbacks.h"
 
@@ -17,9 +17,9 @@ void get_callback(lcb_t instance,
                   lcb_error_t error,
                   const lcb_get_resp_t *item)
 {
-    struct libcouchbase_callback_m *cbm;
-    cbm = (struct libcouchbase_callback_m *)cookie;
-    cbm->ret[cbm->currKey] = malloc(sizeof(struct libcouchbase_callback));
+    struct libaerospike_callback_m *cbm;
+    cbm = (struct libaerospike_callback_m *)cookie;
+    cbm->ret[cbm->currKey] = malloc(sizeof(struct libaerospike_callback));
     cbm->ret[cbm->currKey]->key = malloc(item->v.v0.nkey);
     memcpy(cbm->ret[cbm->currKey]->key, item->v.v0.key, item->v.v0.nkey);
     cbm->ret[cbm->currKey]->nkey = item->v.v0.nkey;
@@ -39,8 +39,8 @@ void arithmetic_callback(lcb_t instance,
                          lcb_error_t error,
                          const lcb_arithmetic_resp_t *resp)
 {
-    struct libcouchbase_callback *cb;
-    cb = (struct libcouchbase_callback *)cookie;
+    struct libaerospike_callback *cb;
+    cb = (struct libaerospike_callback *)cookie;
     cb->error = error;
     cb->flag = 1;
     if (error == LCB_SUCCESS) {
@@ -58,8 +58,8 @@ void unlock_callback(lcb_t instance,
                      const lcb_unlock_resp_t *resp)
 {
     (void)instance;
-    struct libcouchbase_callback *cb;
-    cb = (struct libcouchbase_callback *)cookie;
+    struct libaerospike_callback *cb;
+    cb = (struct libaerospike_callback *)cookie;
     cb->error = error;
 }
 
@@ -69,9 +69,9 @@ void touch_callback(lcb_t instance,
                     const lcb_touch_resp_t *resp)
 {
     (void)instance;
-    struct libcouchbase_callback_m *cbm;
-    cbm = (struct libcouchbase_callback_m *)cookie;
-    cbm->ret[cbm->currKey] = malloc(sizeof(struct libcouchbase_callback));
+    struct libaerospike_callback_m *cbm;
+    cbm = (struct libaerospike_callback_m *)cookie;
+    cbm->ret[cbm->currKey] = malloc(sizeof(struct libaerospike_callback));
     cbm->ret[cbm->currKey]->key = malloc(resp->v.v0.nkey);
     memcpy(cbm->ret[cbm->currKey]->key, resp->v.v0.key, resp->v.v0.nkey);
     cbm->ret[cbm->currKey]->nkey = resp->v.v0.nkey;
@@ -87,8 +87,8 @@ void store_callback(lcb_t instance,
 {
   
     (void)instance; (void)operation;
-    struct libcouchbase_callback *cb;
-    cb = (struct libcouchbase_callback *)cookie;
+    struct libaerospike_callback *cb;
+    cb = (struct libaerospike_callback *)cookie;
     cb->error = error;
     cb->cas = item->v.v0.cas;
 }
@@ -99,8 +99,8 @@ void remove_callback(lcb_t instance,
                      const lcb_remove_resp_t *resp)
 {
     (void)instance;
-    struct libcouchbase_callback *cb;
-    cb = (struct libcouchbase_callback *)cookie;
+    struct libaerospike_callback *cb;
+    cb = (struct libaerospike_callback *)cookie;
     cb->error = error;
 }
 
@@ -111,8 +111,8 @@ void http_callback(lcb_http_request_t request,
                    const lcb_http_resp_t *resp)
 {
     (void)instance;
-    struct libcouchbase_callback_http *cbh;
-    cbh = (struct libcouchbase_callback_http *)cookie;
+    struct libaerospike_callback_http *cbh;
+    cbh = (struct libaerospike_callback_http *)cookie;
     cbh->ret.error = error;
     cbh->status = resp->v.v0.status;
     if(error == LCB_SUCCESS) {
