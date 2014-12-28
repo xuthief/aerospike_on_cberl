@@ -18,7 +18,7 @@ typedef struct handle {
     queue_t *queue;
     ERL_NIF_TERM (*calltable[9])(ErlNifEnv* env, struct handle* handle, void* obj);
     void* (*args_calltable[9])(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
-    lcb_t instance;
+    aerospike instance;
 } handle_t;
 
 #endif

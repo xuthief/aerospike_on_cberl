@@ -23,30 +23,16 @@ NIF(aerospike_nif_new)
     handle_t* handle = enif_alloc_resource(aerospike_handle, sizeof(handle_t));
     handle->queue = queue_new();
 
-    handle->calltable[CMD_CONNECT]         = cb_connect;
-    handle->args_calltable[CMD_CONNECT]    = cb_connect_args;
-    handle->calltable[CMD_STORE]           = cb_store;
-    handle->args_calltable[CMD_STORE]      = cb_store_args;
-    handle->calltable[CMD_MGET]            = cb_mget;
-    handle->args_calltable[CMD_MGET]       = cb_mget_args;
-    handle->calltable[CMD_UNLOCK]          = cb_unlock;
-    handle->args_calltable[CMD_UNLOCK]     = cb_unlock_args;
-    handle->calltable[CMD_MTOUCH]          = cb_mtouch;
-    handle->args_calltable[CMD_MTOUCH]     = cb_mtouch_args;
-    handle->calltable[CMD_ARITHMETIC]      = cb_arithmetic;
-    handle->args_calltable[CMD_ARITHMETIC] = cb_arithmetic_args;
-    handle->calltable[CMD_REMOVE]          = cb_remove;
-    handle->args_calltable[CMD_REMOVE]     = cb_remove_args;
-    handle->calltable[CMD_HTTP]            = cb_http;
-    handle->args_calltable[CMD_HTTP]       = cb_http_args;
-    handle->calltable[LSET_ADD]            = cb_lset_add;
-    handle->args_calltable[LSET_ADD]       = cb_lset_add_args;
-    handle->calltable[LSET_REMOVE]         = cb_lset_remove;
-    handle->args_calltable[LSET_REMOVE]    = cb_lset_remove_args;
-    handle->calltable[LSET_GET]            = cb_lset_get;
-    handle->args_calltable[LSET_GET]       = cb_lset_get_args;
-    handle->calltable[LSET_SIZE]           = cb_lset_size;
-    handle->args_calltable[LSET_SIZE]      = cb_lset_size_args;
+    handle->calltable[CMD_CONNECT]         = as_connect;
+    handle->args_calltable[CMD_CONNECT]    = as_connect_args;
+    handle->calltable[LSET_ADD]            = as_lset_add;
+    handle->args_calltable[LSET_ADD]       = as_lset_add_args;
+    handle->calltable[LSET_REMOVE]         = as_lset_remove;
+    handle->args_calltable[LSET_REMOVE]    = as_lset_remove_args;
+    handle->calltable[LSET_GET]            = as_lset_get;
+    handle->args_calltable[LSET_GET]       = as_lset_get_args;
+    handle->calltable[LSET_SIZE]           = as_lset_size;
+    handle->args_calltable[LSET_SIZE]      = as_lset_size_args;
 
     handle->thread_opts = enif_thread_opts_create("thread_opts");
 
