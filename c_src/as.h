@@ -2,7 +2,20 @@
 #define CB_H
 
 #include "erl_nif.h"
+#include <aerospike/aerospike.h>
 #include "aerospike.h"
+#include <aerospike/aerospike_key.h>
+#include <aerospike/aerospike_lset.h>
+#include <aerospike/as_error.h>
+#include <aerospike/as_record.h>
+#include <aerospike/as_status.h>
+
+typedef enum nif_as_ldt_type_e {
+    NIF_AS_LDT_LLIST,
+    NIF_AS_LDT_LMAP,
+    NIF_AS_LDT_LSET,
+    NIF_AS_LDT_LSTACK
+} nif_as_ldt_type;
 
 typedef struct connect_args {
     char*   host;
@@ -11,27 +24,26 @@ typedef struct connect_args {
     char*   pass;
 } connect_args_t;
 
-typedef struct key_args {
-    char    *ns;
-    char    *set;
-    char    *key;
-} key_args_t;
-
 typedef struct ldt_store_args {
-    key_args_t key_args;
-    char    *ldt;
-    void    *bytes;
-    int     nbytes;
-    int     timeout;
-} store_args_t;
+    as_key      key;
+    as_ldt_type ldt_type;
+    as_ldt      ldt;
+    as_policies policies;
+    as_val      *p_value;
+} ldt_store_args_t;
 
+typedef struct ldt_get_args {
+    as_key      key;
+    as_ldt_type ldt_type;
+    as_ldt      ldt;
+    as_policies policies;
+} ldt_get_args_t;
 
-void* cb_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
-ERL_NIF_TERM cb_connect(ErlNifEnv* env, handle_t* handle, void* obj);
-void* as_ldt_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+void* as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj);
+void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 ERL_NIF_TERM as_ldt_store(ErlNifEnv* env, handle_t* handle, void* obj);
-
-ERL_NIF_TERM return_as_error(ErlNifEnv* env, int const value);
-ERL_NIF_TERM return_value(ErlNifEnv* env, void * cookie);
+void* as_ldt_get_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+ERL_NIF_TERM as_ldt_get(ErlNifEnv* env, handle_t* handle, void* obj);
 
 #endif

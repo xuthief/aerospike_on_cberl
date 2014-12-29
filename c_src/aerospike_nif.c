@@ -1,8 +1,7 @@
 #include <string.h>
 #include <stdio.h>
-#include "aerospike.h"
 #include "aerospike_nif.h"
-#include "cb.h"
+#include "as.h"
 
 static ErlNifResourceType* aerospike_handle = NULL;
 
@@ -25,14 +24,14 @@ NIF(aerospike_nif_new)
 
     handle->calltable[CMD_CONNECT]         = as_connect;
     handle->args_calltable[CMD_CONNECT]    = as_connect_args;
-    handle->calltable[LSET_ADD]            = as_lset_add;
-    handle->args_calltable[LSET_ADD]       = as_lset_add_args;
-    handle->calltable[LSET_REMOVE]         = as_lset_remove;
-    handle->args_calltable[LSET_REMOVE]    = as_lset_remove_args;
-    handle->calltable[LSET_GET]            = as_lset_get;
-    handle->args_calltable[LSET_GET]       = as_lset_get_args;
-    handle->calltable[LSET_SIZE]           = as_lset_size;
-    handle->args_calltable[LSET_SIZE]      = as_lset_size_args;
+    handle->calltable[LSET_ADD]            = as_ldt_store;
+    handle->args_calltable[LSET_ADD]       = as_ldt_store_args;
+    handle->calltable[LSET_REMOVE]         = as_ldt_store;
+    handle->args_calltable[LSET_REMOVE]    = as_ldt_store_args;
+    handle->calltable[LSET_GET]            = as_ldt_get;
+    handle->args_calltable[LSET_GET]       = as_ldt_get_args;
+    handle->calltable[LSET_SIZE]           = as_ldt_get;
+    handle->args_calltable[LSET_SIZE]      = as_ldt_get_args;
 
     handle->thread_opts = enif_thread_opts_create("thread_opts");
 
@@ -107,7 +106,12 @@ NIF(aerospike_nif_destroy) {
     enif_thread_join(handle->thread, &resp);
     queue_destroy(handle->queue);
     enif_thread_opts_destroy(handle->thread_opts);
-    lcb_destroy(handle->instance);
+
+	as_error err;
+	// Disconnect from the database cluster and clean up the aerospike object.
+	aerospike_close(&handle->instance, &err);
+    aerospike_destroy(&handle->instance);
+
     enif_release_resource(handle); 
     return A_OK(env);
 }

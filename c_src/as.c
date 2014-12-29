@@ -1,13 +1,12 @@
-#include <libaerospike/aerospike.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "callbacks.h"
 #include "as.h"
+#include <aerospike/as_arraylist_iterator.h>
 
 char *format_as_error(char *api, as_error *err) {
     static char str_error[512];
-    sprintf(str_error, "%s: %d - %s", api, err.code, err.message);
+    sprintf(str_error, "%s: %d - %s", api, err->code, err->message);
     return str_error;
 }
 
@@ -20,7 +19,7 @@ void *as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     args->host = (char *) malloc(arg_length + 1);
     if (!enif_get_string(env, argv[0], args->host, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
 
-    if (!enif_get_int(env, argv[1], args->port, arg_length + 1, ERL_NIF_LATIN1)) goto error2;
+    if (!enif_get_int(env, argv[1], &args->port)) goto error2;
 
     if (!enif_get_list_length(env, argv[2], &arg_length)) goto error2;
     args->user= (char *) malloc(arg_length + 1);
@@ -59,8 +58,6 @@ ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
     as_config_add_host(&cfg, args->host, args->port);
     as_config_set_user(&cfg, args->user, args->pass);
 
-    create_options.v.v0.passwd = args->pass;
-
     as_res = aerospike_connect(p_as, &err);
 
     free(args->host);
@@ -70,275 +67,312 @@ ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
     if (as_res != AEROSPIKE_OK) {
 		aerospike_destroy(p_as);
         return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error("aerospike_connect", err), ERL_NIF_LATIN1));
+                enif_make_string(env, format_as_error("aerospike_connect", &err), ERL_NIF_LATIN1));
 	}
 
     return enif_make_atom(env, "ok");
 }
 
-void* cb_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[])
 {
-    store_args_t* args = (store_args_t*)enif_alloc(sizeof(store_args_t));
+    unsigned arg_length;
 
-    ErlNifBinary value_binary;
-    ErlNifBinary key_binary;
+    if (!enif_get_list_length(env, argv[0], &arg_length)) goto error0;
+    char *ns = (char *) malloc(arg_length + 1);
+    if (!enif_get_string(env, argv[0], ns, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
 
-    if (!enif_get_int(env, argv[0], &args->operation)) goto error0;
-    if (!enif_inspect_iolist_as_binary(env, argv[1], &key_binary)) goto error0;
-    if (!enif_inspect_iolist_as_binary(env, argv[2], &value_binary)) goto error0;
+    if (!enif_get_list_length(env, argv[1], &arg_length)) goto error1;
+    char *set = (char *) malloc(arg_length + 1);
+    if (!enif_get_string(env, argv[1], set, arg_length + 1, ERL_NIF_LATIN1)) goto error2;
 
-    args->nkey = key_binary.size;
-    args->nbytes = value_binary.size;
-    args->key = (char*)malloc(key_binary.size);
-    args->bytes = (char*)malloc(value_binary.size);
-    memcpy(args->bytes, value_binary.data, value_binary.size);
-    memcpy(args->key, key_binary.data, key_binary.size);
+    if (!enif_get_list_length(env, argv[2], &arg_length)) goto error2;
+    char *key_str = (char *) malloc(arg_length + 1);
+    if (!enif_get_string(env, argv[2], key_str, arg_length + 1, ERL_NIF_LATIN1)) goto error3;
 
-    if (!enif_get_uint(env, argv[3], &args->flags)) goto error1;
-    if (!enif_get_int(env, argv[4], &args->exp)) goto error1;
-    if (!enif_get_uint64(env, argv[5], (ErlNifUInt64*)&args->cas)) goto error1;
+    // Initialize the test as_key object. We won't need to destroy it since it
+    // isn't being created on the heap or with an external as_key_value.
+    if(!as_key_init_strp(key, ns, set, key_str, false)) goto error4;
+
+    return key;
+
+    error4:
+    error3:
+    free(key_str);
+    error2:
+    free(set);
+    error1:
+    free(ns);
+    error0:
+
+    return NULL;
+}
+
+as_ldt_type* init_ldt_type_from_arg(ErlNifEnv* env, as_ldt_type *p_ldt_type, const ERL_NIF_TERM arg_type)
+{
+    nif_as_ldt_type nif_ldt_type;
+    if (!enif_get_uint(env, arg_type, &nif_ldt_type)) return NULL;
+
+    switch (nif_ldt_type)
+    {
+        case NIF_AS_LDT_LLIST:
+            *p_ldt_type = AS_LDT_LLIST;
+            break;
+        case NIF_AS_LDT_LMAP:
+            *p_ldt_type = AS_LDT_LMAP;
+            break;
+        case NIF_AS_LDT_LSET:
+            *p_ldt_type = AS_LDT_LSET;
+            break;
+        case NIF_AS_LDT_LSTACK:
+            *p_ldt_type = AS_LDT_LSTACK;
+            break;
+        default:
+            return NULL;
+    }
+    return p_ldt_type;
+}
+
+as_ldt* init_ldt_from_arg(ErlNifEnv* env, as_ldt *p_ldt, as_ldt_type ldt_type, const ERL_NIF_TERM arg_ldt)
+{
+    unsigned arg_length;
+    if (!enif_get_list_length(env, arg_ldt, &arg_length)) goto error0;
+    char* str_ldt = (char *) malloc(arg_length + 1);
+    if (!enif_get_string(env, arg_ldt, str_ldt, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
+
+	if (!as_ldt_init(p_ldt, str_ldt, ldt_type, NULL)) goto error2;
+
+    return p_ldt;
+
+    error2:
+    free(str_ldt);
+    error1:
+    error0:
+
+    return NULL;
+}
+
+as_val* new_val_from_arg(ErlNifEnv* env, const ERL_NIF_TERM argv)
+{
+    as_val *val;
+
+    // integer
+    int64_t i64Value;
+    if (enif_get_int64(env, argv, (ErlNifSInt64*)&i64Value))
+    {
+        val = (as_val *)as_integer_new(i64Value);
+        return val;
+    }
+
+    // string
+    unsigned arg_length;
+    if (enif_get_list_length(env, argv, &arg_length))
+    {
+        char *strValue = (char *) malloc(arg_length + 1);
+        if (!enif_get_string(env, argv, strValue, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
+        if (!(val=(as_val *)as_string_new(strValue, true))) goto error1;
+        return val;
+
+    error1:
+        free(strValue);
+        return NULL;
+    }
+
+    ErlNifBinary val_binary;
+    if (enif_inspect_iolist_as_binary(env, argv, &val_binary))
+    {
+        uint8_t *binValue = malloc(sizeof(uint8_t) * val_binary.size);
+        memcpy(binValue, val_binary.data, val_binary.size);
+        if (!(val=(as_val *)as_bytes_new_wrap(binValue, val_binary.size, true))) goto error2;
+        return val;
+        
+    error2:
+        free(binValue);
+        return NULL;
+    }
+
+    return NULL;
+}
+
+as_policies* init_policy_from_arg(ErlNifEnv* env, as_policies *p_policies, as_ldt_type ldt_type, const ERL_NIF_TERM arg_timeout)
+{
+    uint32_t ldt_timeout;
+    if (!enif_get_uint(env, arg_timeout, &ldt_timeout)) goto error0;
+
+    if (!as_policy_read_init(&p_policies->read)) goto error0;
+    p_policies->read.timeout = ldt_timeout;
+
+    return p_policies;
+
+    error0:
+
+    return NULL;
+}
+
+void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    ldt_store_args_t* args = (ldt_store_args_t*)enif_alloc(sizeof(ldt_store_args_t));
+
+    // ns, set, key
+    if (!init_key_from_args(env, &args->key, argv)) goto error0;
+
+    // ldt_type 
+    if (!init_ldt_type_from_arg(env, &args->ldt_type, argv[3])) goto error1;
+
+    // ldt
+    if (!init_ldt_from_arg(env, &args->ldt, args->ldt_type, argv[4])) goto error1;
+
+    // policy
+    if (!init_policy_from_arg(env, &args->policies, args->ldt_type, argv[5])) goto error2;
+
+    // value
+    if (!(args->p_value=new_val_from_arg(env, argv[6]))) goto error3;
 
     return args;
 
+    error3:
+    error2:
+    as_ldt_destroy(&args->ldt);
     error1:
-    free(args->bytes);
-    free(args->key);
+    as_key_destroy(&args->key);
     error0:
     enif_free(args);
 
     return NULL;
 }
 
-ERL_NIF_TERM cb_store(ErlNifEnv* env, handle_t* handle, void* obj)
+ERL_NIF_TERM as_ldt_store(ErlNifEnv* env, handle_t* handle, void* obj)
 {
-    store_args_t* args = (store_args_t*)obj;
+    ldt_store_args_t * args = (ldt_store_args_t *)obj;
 
-    struct libaerospike_callback cb;
+    as_status res;
+	as_error err;
 
-    lcb_error_t ret;
-
-    lcb_store_cmd_t cmd;
-    const lcb_store_cmd_t *commands[1];
-
-    commands[0] = &cmd;
-    memset(&cmd, 0, sizeof(cmd));
-    cmd.v.v0.operation = args->operation;
-    cmd.v.v0.key = args->key;
-    cmd.v.v0.nkey = args->nkey;
-    cmd.v.v0.bytes = args->bytes;
-    cmd.v.v0.nbytes = args->nbytes;
-    cmd.v.v0.flags = args->flags;
-    cmd.v.v0.exptime = args->exp;
-    cmd.v.v0.cas = args->cas;
-
-    ret = lcb_store(handle->instance, &cb, 1, commands);
-    
-    free(args->key);
-    free(args->bytes);
-    
-    if (ret != LCB_SUCCESS) {
-        return return_lcb_error(env, ret);
+	// Add an integer value to the set.
+    char errmsg[255];
+    switch (args->ldt_type)
+    {
+        case AS_LDT_LSET:
+            res = aerospike_lset_add(&handle->instance, &err, &args->policies.apply, &args->key, &args->ldt, args->p_value);
+            break;
+        case AS_LDT_LLIST:
+        case AS_LDT_LMAP:
+        case AS_LDT_LSTACK:
+        default:
+            sprintf(errmsg, "unsupported ldt type: %d", args->ldt_type);
+            return enif_make_tuple2(env, enif_make_atom(env, "error"),
+                    enif_make_string(env, errmsg, ERL_NIF_LATIN1));
     }
 
-    lcb_wait(handle->instance);
-
-    if (cb.error != LCB_SUCCESS) {
-        return return_lcb_error(env, cb.error);
+    if(res != AEROSPIKE_OK) {
+        return enif_make_tuple2(env, enif_make_atom(env, "error"),
+                enif_make_string(env, format_as_error("aerospike_lset_add", &err), ERL_NIF_LATIN1));
     }
+
     return A_OK(env);
 }
 
-void* cb_mget_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+void* as_ldt_get_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    mget_args_t* args = (mget_args_t*)enif_alloc(sizeof(mget_args_t));
+    ldt_get_args_t* args = (ldt_get_args_t*)enif_alloc(sizeof(ldt_get_args_t));
 
-    ERL_NIF_TERM* currKey;
-    ERL_NIF_TERM tail;
-    ErlNifBinary key_binary;
+    // ns, set, key
+    if (!init_key_from_args(env, &args->key, argv)) goto error0;
 
-    if (!enif_get_list_length(env, argv[0], &args->numkeys)) goto error0;     
-    args->keys = malloc(sizeof(char*) * args->numkeys);
-    args->nkeys = malloc(sizeof(size_t) * args->numkeys);
-    currKey = malloc(sizeof(ERL_NIF_TERM));
-    tail = argv[0];
-    int i = 0;
-    while(0 != enif_get_list_cell(env, tail, currKey, &tail)) {
-        if (!enif_inspect_iolist_as_binary(env, *currKey, &key_binary)) goto error1;
-        args->keys[i] = malloc(sizeof(char) * key_binary.size);
-        memcpy(args->keys[i], key_binary.data, key_binary.size);
-        args->nkeys[i] = key_binary.size;
-        i++;
-    }
-    
-    if (!enif_get_int(env, argv[1], &args->exp)) goto error1;
-    if (!enif_get_int(env, argv[2], &args->lock)) goto error1;
-    if (!enif_get_int(env, argv[3], &args->gettype)) goto error1;
+    // ldt_type 
+    if (!init_ldt_type_from_arg(env, &args->ldt_type, argv[3])) goto error1;
 
-    free(currKey);
+    // ldt
+    if (!init_ldt_from_arg(env, &args->ldt, args->ldt_type, argv[4])) goto error1;
 
-    return (void*)args;
+    // policy
+    if (!init_policy_from_arg(env, &args->policies, args->ldt_type, argv[5])) goto error2;
 
-    int f = 0;
+    return args;
 
+    error2:
+    as_ldt_destroy(&args->ldt);
     error1:
-    for(f = 0; f < i; f++) {
-        free(args->keys[f]);
-    }
-    free(args->keys);
-    free(args->nkeys);
-    free(currKey);
+    as_key_destroy(&args->key);
     error0:
     enif_free(args);
 
     return NULL;
 }
 
-ERL_NIF_TERM cb_mget(ErlNifEnv* env, handle_t* handle, void* obj)
+ERL_NIF_TERM make_nif_term_from_as_val(ErlNifEnv* env, const as_val *p_val)
 {
-    mget_args_t* args = (mget_args_t*)obj;
+    if(p_val->type == AS_INTEGER)
+    {
+        return enif_make_int(env, ((as_integer*)p_val)->value);
+    }
+    else if (p_val->type == AS_STRING)
+    {
+        as_string *p_str = (as_string *)p_val;
+        return enif_make_string(env, p_str->value, ERL_NIF_LATIN1);
+    }
+    else if(p_val->type == AS_BYTES)
+    {
+        as_bytes *p_bytes = (as_bytes*)p_val;
 
-    struct libaerospike_callback_m cb; 
+        ErlNifBinary val_binary;
+        enif_alloc_binary(p_bytes->size, &val_binary);
+        memcpy(val_binary.data, p_bytes->value, p_bytes->size);
+        return enif_make_binary(env, &val_binary);
+    }
+    return enif_make_string(env, "unkown", ERL_NIF_LATIN1);
+}
 
-    lcb_error_t ret;
-    
+ERL_NIF_TERM as_ldt_get(ErlNifEnv* env, handle_t* handle, void* obj)
+{
+    ldt_get_args_t* args = (ldt_get_args_t*)obj;
+
+    as_status res;
+	as_error err;
+	as_list* p_list = NULL;
+
+	// Add an integer value to the set.
+    char errmsg[255];
+    switch (args->ldt_type)
+    {
+        case AS_LDT_LSET:
+            res = aerospike_lset_filter(&handle->instance, &err, NULL, &args->key, &args->ldt, NULL, NULL,
+			&p_list);
+            break;
+        case AS_LDT_LLIST:
+        case AS_LDT_LMAP:
+        case AS_LDT_LSTACK:
+        default:
+            sprintf(errmsg, "unsupported ldt type: %d", args->ldt_type);
+            return enif_make_tuple2(env, enif_make_atom(env, "error"),
+                    enif_make_string(env, errmsg, ERL_NIF_LATIN1));
+    }
+
+    if(res != AEROSPIKE_OK) {
+        return enif_make_tuple2(env, enif_make_atom(env, "error"),
+                enif_make_string(env, format_as_error("aerospike_lset_filter", &err), ERL_NIF_LATIN1));
+    }
+
     ERL_NIF_TERM* results;
-    ERL_NIF_TERM returnValue;
-    ErlNifBinary databin;
-    ErlNifBinary key_binary;
-    unsigned int numkeys = args->numkeys;
-    void** keys = args->keys;
-    size_t* nkeys = args->nkeys;
-    int exp = args->exp;
-    int lock = args->lock;
-    int gettype = args->gettype;
+    uint32_t nresults = as_list_size(p_list);
+    results = malloc(sizeof(ERL_NIF_TERM) * nresults);
+
+	as_arraylist_iterator it;
+	as_arraylist_iterator_init(&it, (const as_arraylist*)p_list);
+
     int i = 0;
+	// See if the elements match what we expect.
+	while (as_arraylist_iterator_has_next(&it)) {
+		const as_val* p_val = as_arraylist_iterator_next(&it);
+        results[i++] = make_nif_term_from_as_val(env, p_val);
+	}
 
-    cb.currKey = 0;
-    cb.ret = malloc(sizeof(struct libaerospike_callback*) * numkeys);
+	as_list_destroy(p_list);
+	p_list = NULL;
 
-
-    const lcb_get_cmd_t* commands[numkeys];
-    i = 0;
-    for (; i < numkeys; i++) {
-      lcb_get_cmd_t *get = calloc(1, sizeof(*get));
-      get->version = 0;
-      get->v.v0.key = keys[i];
-      get->v.v0.nkey = nkeys[i];
-      get->v.v0.exptime = exp;
-      get->v.v0.lock = lock;
-      get->v.v0.gettype = gettype;
-      commands[i] = get;
-    }
-
-    ret = lcb_get(handle->instance, &cb, numkeys, commands);
-
-    if (ret != LCB_SUCCESS) {
-        return return_lcb_error(env, ret);
-    }
-    lcb_wait(handle->instance);
-
-    results = malloc(sizeof(ERL_NIF_TERM) * numkeys);
-    i = 0; 
-    for(; i < numkeys; i++) {
-        enif_alloc_binary(cb.ret[i]->nkey, &key_binary);
-        memcpy(key_binary.data, cb.ret[i]->key, cb.ret[i]->nkey);
-        if (cb.ret[i]->error == LCB_SUCCESS) {
-            enif_alloc_binary(cb.ret[i]->size, &databin);
-            memcpy(databin.data, cb.ret[i]->data, cb.ret[i]->size);
-            results[i] = enif_make_tuple4(env, 
-                    enif_make_uint64(env, cb.ret[i]->cas), 
-                    enif_make_int(env, cb.ret[i]->flag), 
-                    enif_make_binary(env, &key_binary),
-                    enif_make_binary(env, &databin));
-            free(cb.ret[i]->data);
-        } else {
-            results[i] = enif_make_tuple2(env, 
-                    enif_make_binary(env, &key_binary),
-                    return_lcb_error(env, cb.ret[i]->error));
-        }
-        free(cb.ret[i]->key);
-        free(cb.ret[i]);
-        free(keys[i]);
-        free((lcb_get_cmd_t*) commands[i]);
-    }
-
-    returnValue = enif_make_list_from_array(env, results, numkeys);
+    ERL_NIF_TERM returnValue;
+    returnValue = enif_make_list_from_array(env, results, nresults);
     
     free(results);
-    free(cb.ret);
-    free(keys);
-    free(nkeys);
 
     return enif_make_tuple2(env, A_OK(env), returnValue);
-}
-
-ERL_NIF_TERM return_lcb_error(ErlNifEnv* env, int const value) {
-    switch (value) {
-        case LCB_SUCCESS:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "success"));
-        case LCB_AUTH_CONTINUE:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "auth_continue"));
-        case LCB_AUTH_ERROR:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "auth_error"));
-        case LCB_DELTA_BADVAL:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "delta_badval"));
-        case LCB_E2BIG:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "e2big"));
-        case LCB_EBUSY:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "ebusy"));
-        case LCB_EINTERNAL:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "einternal"));
-        case LCB_EINVAL:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "einval"));
-        case LCB_ENOMEM:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "enomem"));
-        case LCB_ERANGE:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "erange"));
-        case LCB_ERROR:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "error"));
-        case LCB_ETMPFAIL:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "etmpfail"));
-        case LCB_KEY_EEXISTS:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "key_eexists"));
-        case LCB_KEY_ENOENT:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "key_enoent"));
-        case LCB_NETWORK_ERROR:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "network_error"));
-        case LCB_NOT_MY_VBUCKET:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "not_my_vbucket"));
-        case LCB_NOT_STORED:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "not_stored"));
-        case LCB_NOT_SUPPORTED:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "not_supported"));
-        case LCB_UNKNOWN_COMMAND:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "unknown_command"));
-        case LCB_UNKNOWN_HOST:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "unknown_host"));
-        case LCB_PROTOCOL_ERROR:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "protocol_error"));
-        case LCB_ETIMEDOUT:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "etimedout"));
-        case LCB_CONNECT_ERROR:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "connect_error"));
-        case LCB_BUCKET_ENOENT:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "bucket_enoent"));
-        case LCB_CLIENT_ENOMEM:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "client_enomem"));
-        default:
-            return enif_make_tuple2(env, A_ERROR(env), enif_make_atom(env, "unknown_error"));            
-    }
-}
-
-ERL_NIF_TERM return_value(ErlNifEnv* env, void * cookie) {
-    struct libaerospike_callback *cb;
-    cb = (struct libaerospike_callback *)cookie;
-    ErlNifBinary value_binary;
-    ERL_NIF_TERM term;
-    enif_alloc_binary(cb->size, &value_binary);
-    memcpy(value_binary.data, cb->data, cb->size);
-    term  =   enif_make_tuple3(env, enif_make_int(env, cb->cas),
-                                           enif_make_int(env, cb->flag), 
-                                           enif_make_binary(env, &value_binary));
-    free(cb->data);
-    return term;
 }

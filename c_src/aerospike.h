@@ -1,9 +1,9 @@
-#ifndef CBERL_H
-#define CBERL_H
+#ifndef ASERL_H
+#define ASERL_H
 
-#include <libaerospike/aerospike.h>
+#include <aerospike/aerospike.h>
 #include "queue.h"
-#include "erl_nif.h"
+#include "aerospike_nif.h"
 
 #define A_OK(env)            enif_make_atom(env, "ok")
 #define A_ERROR(env)    enif_make_atom(env, "error")
@@ -16,8 +16,8 @@ typedef struct handle {
     ErlNifTid thread;
     ErlNifThreadOpts* thread_opts;
     queue_t *queue;
-    ERL_NIF_TERM (*calltable[9])(ErlNifEnv* env, struct handle* handle, void* obj);
-    void* (*args_calltable[9])(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
+    ERL_NIF_TERM (*calltable[CMD_MAX])(ErlNifEnv* env, struct handle* handle, void* obj);
+    void* (*args_calltable[CMD_MAX])(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
     aerospike instance;
 } handle_t;
 

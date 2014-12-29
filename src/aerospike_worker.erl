@@ -288,23 +288,3 @@ op(mtouch) -> ?'CMD_MTOUCH';
 op(arithmetic) -> ?'CMD_ARITHMETIC';
 op(remove) -> ?'CMD_REMOVE';
 op(http) -> ?'CMD_HTTP'.
-
--spec canonical_bucket_name(string()) -> string().
-canonical_bucket_name(Name) ->
-    case Name of
-        [] -> "default";
-        BucketName -> BucketName
-    end.
-
--spec binary_to_uint64(binary()) -> integer().
-binary_to_uint64(Bin) ->
-    case Bin of 
-        <<U64:64/unsigned-big-integer>> -> U64
-    end.
-
--spec binary_to_uint64_list(binary()) -> list().
-binary_to_uint64_list(Bin) ->
-    case Bin of
-        <<U64:64/unsigned-big-integer>> -> [U64];
-        <<U64:64/unsigned-big-integer, Rest/binary>> -> [U64 | binary_to_uint64_list(Rest)]
-    end.
