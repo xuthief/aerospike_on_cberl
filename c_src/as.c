@@ -4,7 +4,7 @@
 #include "as.h"
 #include <aerospike/as_arraylist_iterator.h>
 
-char *format_as_error(char *api, as_error *err) {
+char *format_as_error(const char *api, as_error *err) {
     static char str_error[512];
     sprintf(str_error, "%s: %d - %s", api, err->code, err->message);
     return str_error;
@@ -107,7 +107,8 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
     return NULL;
 }
 
-as_ldt_type* init_ldt_type_from_arg(ErlNifEnv* env, as_ldt_type *p_ldt_type, const ERL_NIF_TERM arg_type)
+/*
+as_ldt_type* init_ldt_store_type_from_arg(ErlNifEnv* env, as_nif_ldt_store_type *p_ldt_store_type, const ERL_NIF_TERM arg_type)
 {
     nif_as_ldt_type nif_ldt_type;
     if (!enif_get_uint(env, arg_type, &nif_ldt_type)) return NULL;
@@ -131,25 +132,7 @@ as_ldt_type* init_ldt_type_from_arg(ErlNifEnv* env, as_ldt_type *p_ldt_type, con
     }
     return p_ldt_type;
 }
-
-as_ldt* init_ldt_from_arg(ErlNifEnv* env, as_ldt *p_ldt, as_ldt_type ldt_type, const ERL_NIF_TERM arg_ldt)
-{
-    unsigned arg_length;
-    if (!enif_get_list_length(env, arg_ldt, &arg_length)) goto error0;
-    char* str_ldt = (char *) malloc(arg_length + 1);
-    if (!enif_get_string(env, arg_ldt, str_ldt, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
-
-	if (!as_ldt_init(p_ldt, str_ldt, ldt_type, NULL)) goto error2;
-
-    return p_ldt;
-
-    error2:
-    free(str_ldt);
-    error1:
-    error0:
-
-    return NULL;
-}
+*/
 
 as_val* new_val_from_arg(ErlNifEnv* env, const ERL_NIF_TERM argv)
 {
@@ -193,108 +176,36 @@ as_val* new_val_from_arg(ErlNifEnv* env, const ERL_NIF_TERM argv)
     return NULL;
 }
 
-as_policies* init_policy_from_arg(ErlNifEnv* env, as_policies *p_policies, as_ldt_type ldt_type, const ERL_NIF_TERM arg_timeout)
+as_ldt* init_ldt_from_arg(ErlNifEnv* env, as_ldt *p_ldt, as_ldt_type ldt_type, const ERL_NIF_TERM arg_ldt)
+{
+    unsigned arg_length;
+    if (!enif_get_list_length(env, arg_ldt, &arg_length)) goto error0;
+    char* str_ldt = (char *) malloc(arg_length + 1);
+    if (!enif_get_string(env, arg_ldt, str_ldt, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
+
+	if (!as_ldt_init(p_ldt, str_ldt, ldt_type, NULL)) goto error2;
+
+    return p_ldt;
+
+    error2:
+    free(str_ldt);
+    error1:
+    error0:
+
+    return NULL;
+}
+
+as_policy_apply* init_policy_apply_from_arg(ErlNifEnv* env, as_policy_apply *p_policy, const ERL_NIF_TERM arg_timeout)
 {
     uint32_t ldt_timeout;
     if (!enif_get_uint(env, arg_timeout, &ldt_timeout)) goto error0;
 
-    if (!as_policy_read_init(&p_policies->read)) goto error0;
-    p_policies->read.timeout = ldt_timeout;
+    if (!as_policy_apply_init(p_policy)) goto error0;
+    p_policy->timeout = ldt_timeout;
 
-    return p_policies;
+    return p_policy;
 
     error0:
-
-    return NULL;
-}
-
-void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    ldt_store_args_t* args = (ldt_store_args_t*)enif_alloc(sizeof(ldt_store_args_t));
-
-    // ns, set, key
-    if (!init_key_from_args(env, &args->key, argv)) goto error0;
-
-    // ldt_type 
-    if (!init_ldt_type_from_arg(env, &args->ldt_type, argv[3])) goto error1;
-
-    // ldt
-    if (!init_ldt_from_arg(env, &args->ldt, args->ldt_type, argv[4])) goto error1;
-
-    // policy
-    if (!init_policy_from_arg(env, &args->policies, args->ldt_type, argv[5])) goto error2;
-
-    // value
-    if (!(args->p_value=new_val_from_arg(env, argv[6]))) goto error3;
-
-    return args;
-
-    error3:
-    error2:
-    as_ldt_destroy(&args->ldt);
-    error1:
-    as_key_destroy(&args->key);
-    error0:
-    enif_free(args);
-
-    return NULL;
-}
-
-ERL_NIF_TERM as_ldt_store(ErlNifEnv* env, handle_t* handle, void* obj)
-{
-    ldt_store_args_t * args = (ldt_store_args_t *)obj;
-
-    as_status res;
-	as_error err;
-
-	// Add an integer value to the set.
-    char errmsg[255];
-    switch (args->ldt_type)
-    {
-        case AS_LDT_LSET:
-            res = aerospike_lset_add(&handle->instance, &err, &args->policies.apply, &args->key, &args->ldt, args->p_value);
-            break;
-        case AS_LDT_LLIST:
-        case AS_LDT_LMAP:
-        case AS_LDT_LSTACK:
-        default:
-            sprintf(errmsg, "unsupported ldt type: %d", args->ldt_type);
-            return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                    enif_make_string(env, errmsg, ERL_NIF_LATIN1));
-    }
-
-    if(res != AEROSPIKE_OK) {
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error("aerospike_lset_add", &err), ERL_NIF_LATIN1));
-    }
-
-    return A_OK(env);
-}
-
-void* as_ldt_get_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    ldt_get_args_t* args = (ldt_get_args_t*)enif_alloc(sizeof(ldt_get_args_t));
-
-    // ns, set, key
-    if (!init_key_from_args(env, &args->key, argv)) goto error0;
-
-    // ldt_type 
-    if (!init_ldt_type_from_arg(env, &args->ldt_type, argv[3])) goto error1;
-
-    // ldt
-    if (!init_ldt_from_arg(env, &args->ldt, args->ldt_type, argv[4])) goto error1;
-
-    // policy
-    if (!init_policy_from_arg(env, &args->policies, args->ldt_type, argv[5])) goto error2;
-
-    return args;
-
-    error2:
-    as_ldt_destroy(&args->ldt);
-    error1:
-    as_key_destroy(&args->key);
-    error0:
-    enif_free(args);
 
     return NULL;
 }
@@ -320,59 +231,4 @@ ERL_NIF_TERM make_nif_term_from_as_val(ErlNifEnv* env, const as_val *p_val)
         return enif_make_binary(env, &val_binary);
     }
     return enif_make_string(env, "unkown", ERL_NIF_LATIN1);
-}
-
-ERL_NIF_TERM as_ldt_get(ErlNifEnv* env, handle_t* handle, void* obj)
-{
-    ldt_get_args_t* args = (ldt_get_args_t*)obj;
-
-    as_status res;
-	as_error err;
-	as_list* p_list = NULL;
-
-	// Add an integer value to the set.
-    char errmsg[255];
-    switch (args->ldt_type)
-    {
-        case AS_LDT_LSET:
-            res = aerospike_lset_filter(&handle->instance, &err, NULL, &args->key, &args->ldt, NULL, NULL,
-			&p_list);
-            break;
-        case AS_LDT_LLIST:
-        case AS_LDT_LMAP:
-        case AS_LDT_LSTACK:
-        default:
-            sprintf(errmsg, "unsupported ldt type: %d", args->ldt_type);
-            return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                    enif_make_string(env, errmsg, ERL_NIF_LATIN1));
-    }
-
-    if(res != AEROSPIKE_OK) {
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error("aerospike_lset_filter", &err), ERL_NIF_LATIN1));
-    }
-
-    ERL_NIF_TERM* results;
-    uint32_t nresults = as_list_size(p_list);
-    results = malloc(sizeof(ERL_NIF_TERM) * nresults);
-
-	as_arraylist_iterator it;
-	as_arraylist_iterator_init(&it, (const as_arraylist*)p_list);
-
-    int i = 0;
-	// See if the elements match what we expect.
-	while (as_arraylist_iterator_has_next(&it)) {
-		const as_val* p_val = as_arraylist_iterator_next(&it);
-        results[i++] = make_nif_term_from_as_val(env, p_val);
-	}
-
-	as_list_destroy(p_list);
-	p_list = NULL;
-
-    ERL_NIF_TERM returnValue;
-    returnValue = enif_make_list_from_array(env, results, nresults);
-    
-    free(results);
-
-    return enif_make_tuple2(env, A_OK(env), returnValue);
 }

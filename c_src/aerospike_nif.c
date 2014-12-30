@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "aerospike_nif.h"
 #include "as.h"
+#include "as_lset.h"
 
 static ErlNifResourceType* aerospike_handle = NULL;
 
@@ -24,13 +25,13 @@ NIF(aerospike_nif_new)
 
     handle->calltable[CMD_CONNECT]         = as_connect;
     handle->args_calltable[CMD_CONNECT]    = as_connect_args;
-    handle->calltable[LSET_ADD]            = as_ldt_store;
+    handle->calltable[LSET_ADD]            = as_ldt_lset_add;
     handle->args_calltable[LSET_ADD]       = as_ldt_store_args;
-    handle->calltable[LSET_REMOVE]         = as_ldt_store;
+    handle->calltable[LSET_REMOVE]         = as_ldt_lset_remove;
     handle->args_calltable[LSET_REMOVE]    = as_ldt_store_args;
-    handle->calltable[LSET_GET]            = as_ldt_get;
+    handle->calltable[LSET_GET]            = as_ldt_lset_get;
     handle->args_calltable[LSET_GET]       = as_ldt_get_args;
-    handle->calltable[LSET_SIZE]           = as_ldt_get;
+    handle->calltable[LSET_SIZE]           = as_ldt_lset_size;
     handle->args_calltable[LSET_SIZE]      = as_ldt_get_args;
 
     handle->thread_opts = enif_thread_opts_create("thread_opts");
