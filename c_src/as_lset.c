@@ -35,6 +35,8 @@ void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 ERL_NIF_TERM as_ldt_lset_add(ErlNifEnv* env, handle_t* handle, void* obj)
 {
+    DEBUG_TRACE("begin");
+
     ldt_store_args_t * args = (ldt_store_args_t *)obj;
 
     as_status res;
@@ -45,9 +47,10 @@ ERL_NIF_TERM as_ldt_lset_add(ErlNifEnv* env, handle_t* handle, void* obj)
 
     if(res != AEROSPIKE_OK) {
         return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__FUNCTION__, &err), ERL_NIF_LATIN1));
+                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
     }
 
+    DEBUG_TRACE("end");
     return A_OK(env);
 }
 
@@ -63,7 +66,7 @@ ERL_NIF_TERM as_ldt_lset_remove(ErlNifEnv* env, handle_t* handle, void* obj)
 
     if(res != AEROSPIKE_OK) {
         return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__FUNCTION__, &err), ERL_NIF_LATIN1));
+                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
     }
 
     return A_OK(env);
@@ -107,7 +110,7 @@ ERL_NIF_TERM as_ldt_lset_get(ErlNifEnv* env, handle_t* handle, void* obj)
 
     if(res != AEROSPIKE_OK) {
         return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__FUNCTION__, &err), ERL_NIF_LATIN1));
+                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
     }
 
     ERL_NIF_TERM* results;
@@ -147,7 +150,7 @@ ERL_NIF_TERM as_ldt_lset_size(ErlNifEnv* env, handle_t* handle, void* obj)
 
     if(res != AEROSPIKE_OK) {
         return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__FUNCTION__, &err), ERL_NIF_LATIN1));
+                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
     }
 
     ERL_NIF_TERM returnValue;

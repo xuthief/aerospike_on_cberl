@@ -4,12 +4,12 @@
 #include "erl_nif.h"
 
 // Command enum
-#define CMD_CONNECT     0
-#define LSET_ADD        8
-#define LSET_REMOVE     9
-#define LSET_GET        10
-#define LSET_SIZE       11
-#define CMD_MAX (LSET_SIZE+1)
+#define CMD_CONNECT         0
+#define CMD_LSET_ADD        8
+#define CMD_LSET_REMOVE     9
+#define CMD_LSET_GET        10
+#define CMD_LSET_SIZE       11
+#define CMD_MAX             (CMD_LSET_SIZE+1)
 
 typedef struct task {
     ErlNifPid* pid;

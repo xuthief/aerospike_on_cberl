@@ -4,14 +4,16 @@
 #include "as.h"
 #include <aerospike/as_arraylist_iterator.h>
 
+#define ERROR_MSG_LEN (512)
 char *format_as_error(const char *api, as_error *err) {
-    static char str_error[512];
-    sprintf(str_error, "%s: %d - %s", api, err->code, err->message);
+    static char str_error[ERROR_MSG_LEN];
+    snprintf(str_error, ERROR_MSG_LEN, "%s: %d - %s", api, err->code, err->message);
     return str_error;
 }
 
 void *as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    DEBUG_TRACE("begin connect arg");
     connect_args_t* args = (connect_args_t*)enif_alloc(sizeof(connect_args_t));
 
     unsigned arg_length;
@@ -22,13 +24,15 @@ void *as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (!enif_get_int(env, argv[1], &args->port)) goto error2;
 
     if (!enif_get_list_length(env, argv[2], &arg_length)) goto error2;
-    args->user= (char *) malloc(arg_length + 1);
+    args->user = (char *) malloc(arg_length + 1);
     if (!enif_get_string(env, argv[2], args->user, arg_length + 1, ERL_NIF_LATIN1)) goto error3;
 
     if (!enif_get_list_length(env, argv[3], &arg_length)) goto error3;
-    args->pass= (char *) malloc(arg_length + 1);
+    args->pass = (char *) malloc(arg_length + 1);
     if (!enif_get_string(env, argv[3], args->pass, arg_length + 1, ERL_NIF_LATIN1)) goto error4;
      
+    DEBUG_TRACE("end connect arg %s:%d - %s:%s", args->host, args->port, args->user, args->pass);
+
     return (void*)args;
 
     error4:
@@ -46,6 +50,8 @@ void *as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
 ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
 {
+    DEBUG_TRACE("begin connect");
+
     connect_args_t* args = (connect_args_t*)obj;
 
     as_status as_res;
@@ -58,6 +64,8 @@ ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
     as_config_add_host(&cfg, args->host, args->port);
     as_config_set_user(&cfg, args->user, args->pass);
 
+	aerospike_init(p_as, &cfg);
+
     as_res = aerospike_connect(p_as, &err);
 
     free(args->host);
@@ -69,6 +77,8 @@ ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
         return enif_make_tuple2(env, enif_make_atom(env, "error"),
                 enif_make_string(env, format_as_error("aerospike_connect", &err), ERL_NIF_LATIN1));
 	}
+
+    DEBUG_TRACE("end connect, ok");
 
     return enif_make_atom(env, "ok");
 }

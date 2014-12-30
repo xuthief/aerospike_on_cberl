@@ -79,15 +79,6 @@ handle_call({unlock, Key, Cas}, _From,
     receive
         Reply -> {reply, Reply, State}
     end;
-handle_call({store, Op, Key, Value, TranscoderOpts, Exp, Cas}, _From, 
-            State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    StoreValue = Transcoder:encode_value(TranscoderOpts, Value), 
-    ok = aerospike_nif:control(Handle, op(store), [operation_value(Op), Key, StoreValue, 
-                           Transcoder:flag(TranscoderOpts), Exp, Cas]),
-    receive
-        Reply -> {reply, Reply, State}
-    end;
-
 
 handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
     State = #instance{handle = Handle, transcoder = Transcoder}) ->
@@ -165,44 +156,21 @@ handle_call({http, Path, Body, ContentType, Method, Chunked}, _From,
         Reply -> {reply, Reply, State}
     end;
 
-handle_call({lset_add, NS, Set, Key, Ldt, Value, Timeout}, 
-            _From, 
+handle_call({lset_store, Type, NS, Set, Key, Ldt, Value, Timeout}, _From, 
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(lset_add), [
-                NS, Set, Key, Ldt, Value, Timeout]),
+    ok = aerospike_nif:control(Handle, op(Type), [NS, Set, Key, Ldt, Value, Timeout]),
     receive
         Reply -> {reply, Reply, State}
     end;
 
-handle_call({lset_remove, NS, Set, Key, Ldt, Value, Timeout}, 
+handle_call({lset_get, Type, NS, Set, Key, Ldt, Timeout}, 
             _From, 
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(lset_remove), [
-                NS, Set, Key, Ldt, Value, Timeout]),
-    receive
-        Reply -> {reply, Reply, State}
-    end;
-
-handle_call({lset_get, NS, Set, Key, Ldt, Timeout}, 
-            _From, 
-            State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(lset_get), [
+    ok = aerospike_nif:control(Handle, op(Type), [
                 NS, Set, Key, Ldt, Timeout]),
     receive
         Reply -> {reply, Reply, State}
     end;
-
-
-handle_call({lset_size, NS, Set, Key, Ldt, Timeout}, 
-            _From, 
-            State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(lset_size), [
-                NS, Set, Key, Ldt, Timeout]),
-    receive
-        Reply -> {reply, Reply, State}
-    end;
-
-
 
 handle_call(bucketname, _From, State = #instance{bucketname = BucketName}) ->
     {reply, {ok, BucketName}, State};
@@ -266,25 +234,9 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
--spec operation_value(operation_type()) -> integer().
-operation_value(add) -> ?'CBE_ADD';
-operation_value(replace) -> ?'CBE_REPLACE';
-operation_value(set) -> ?'CBE_SET';
-operation_value(append) -> ?'CBE_APPEND';
-operation_value(prepend) -> ?'CBE_PREPEND';
-operation_value(lenqueue) -> ?'CBE_LENQUEUE';
-operation_value(lremove) -> ?'CBE_LREMOVE';
-operation_value(lset_add) -> ?'LSET_ADD';
-operation_value(lset_REMOVE) -> ?'LSET_REMOVE';
-operation_value(lset_GET) -> ?'LSET_GET';
-operation_value(lset_SIZE) -> ?'LSET_SIZE'.
-
 -spec op(atom()) -> integer().
-op(connect) -> ?'CMD_CONNECT';
-op(store) -> ?'CMD_STORE';
-op(mget) -> ?'CMD_MGET';
-op(unlock) -> ?'CMD_UNLOCK';
-op(mtouch) -> ?'CMD_MTOUCH';
-op(arithmetic) -> ?'CMD_ARITHMETIC';
-op(remove) -> ?'CMD_REMOVE';
-op(http) -> ?'CMD_HTTP'.
+op(connect)     -> ?'CMD_CONNECT';
+op(lset_add)    -> ?'CMD_LSET_ADD';
+op(lset_remove) -> ?'CMD_LSET_REMOVE';
+op(lset_get)    -> ?'CMD_LSET_GET';
+op(lset_size)   -> ?'CMD_LSET_SIZE'.

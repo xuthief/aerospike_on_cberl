@@ -16,7 +16,7 @@ aerospike_test_() ->
 %%%===================================================================
 
 setup() ->
-    aerospike:start_link(?POOLNAME, 1, "127.0.0.1", 3000, "", ""),
+    aerospike:start_link(?POOLNAME, 1, "10.37.129.7", 3000, "", ""),
    %aerospike:remove(?POOLNAME, <<"testkey">>),
    %aerospike:remove(?POOLNAME, <<"testkey1">>),
    %aerospike:remove(?POOLNAME, <<"testkey2">>),
@@ -33,7 +33,7 @@ test_sadd(_) ->
     Key = <<"testkey">>,
     Key2 = <<"testkey2">>,
     Value = 1,
-    ok = aerospike:sadd(?POOLNAME, Key, 0, Value),
+    ok = aerospike:lset_add(?POOLNAME, Key, 0, Value),
     Get1 = aerospike:sget(?POOLNAME, Key),
     ok = aerospike:sadd(?POOLNAME, Key, 0, Value),
     Get2 = aerospike:sget(?POOLNAME, Key),

@@ -23,16 +23,16 @@ NIF(aerospike_nif_new)
     handle_t* handle = enif_alloc_resource(aerospike_handle, sizeof(handle_t));
     handle->queue = queue_new();
 
-    handle->calltable[CMD_CONNECT]         = as_connect;
-    handle->args_calltable[CMD_CONNECT]    = as_connect_args;
-    handle->calltable[LSET_ADD]            = as_ldt_lset_add;
-    handle->args_calltable[LSET_ADD]       = as_ldt_store_args;
-    handle->calltable[LSET_REMOVE]         = as_ldt_lset_remove;
-    handle->args_calltable[LSET_REMOVE]    = as_ldt_store_args;
-    handle->calltable[LSET_GET]            = as_ldt_lset_get;
-    handle->args_calltable[LSET_GET]       = as_ldt_get_args;
-    handle->calltable[LSET_SIZE]           = as_ldt_lset_size;
-    handle->args_calltable[LSET_SIZE]      = as_ldt_get_args;
+    handle->calltable[CMD_CONNECT]            	= as_connect;
+    handle->args_calltable[CMD_CONNECT]       	= as_connect_args;
+    handle->calltable[CMD_LSET_ADD]           	= as_ldt_lset_add;
+    handle->args_calltable[CMD_LSET_ADD]      	= as_ldt_store_args;
+    handle->calltable[CMD_LSET_REMOVE]        	= as_ldt_lset_remove;
+    handle->args_calltable[CMD_LSET_REMOVE]   	= as_ldt_store_args;
+    handle->calltable[CMD_LSET_GET]             = as_ldt_lset_get;
+    handle->args_calltable[CMD_LSET_GET]      	= as_ldt_get_args;
+    handle->calltable[CMD_LSET_SIZE]          	= as_ldt_lset_size;
+    handle->args_calltable[CMD_LSET_SIZE]     	= as_ldt_get_args;
 
     handle->thread_opts = enif_thread_opts_create("thread_opts");
 

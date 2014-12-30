@@ -178,7 +178,7 @@ unlock(PoolPid, Key, Cas) ->
 %%     (i.e. 24 * 3600 * 30) then it's an absolute timestamp.
 %%     pass 0 for infinity
 %% CAS
--spec store(pid(), operation_type(), key(), value(), atom(),
+-spec store(pid(), atom(), key(), value(), atom(),
             integer(), integer()) -> ok | {error, _}.
 store(PoolPid, Op, Key, Value, TranscoderOpts, Exp, Cas) ->
     execute(PoolPid, {store, Op, Key, Value,
@@ -265,7 +265,7 @@ handle_flush_result(PoolPid, FlushMarker, Result={ok, 201, _}) ->
 %% ContentType HTTP content type
 %% Method HTTP method
 %% Type Couchbase request type
--spec http(pid(), string(), string(), string(), http_method(), http_type())
+-spec http(pid(), string(), string(), string(), atom(), atom())
 	  -> {ok, binary()} | {error, _}.
 http(PoolPid, Path, Body, ContentType, Method, Type) ->
     execute(PoolPid, {http, Path, Body, ContentType, http_method(Method), http_type(Type)}).
@@ -415,39 +415,39 @@ lremove(PoolPid, Key, Exp, Value) ->
 %% @equiv ldequeue(PoolPid, Key, Exp, standard)
 -spec ldequeue(pid(), key(), integer()) -> ok | {error, _}.
 ldequeue(PoolPid, Key, Exp) ->
-    hd(mget(PoolPid, [Key], Exp, ?'CBE_LDEQUEUE')).
+    hd(mget(PoolPid, [Key], Exp, 0)).
 
 %% @equiv lget(PoolPid, Key)
 -spec lget(pid(), key()) -> ok | {error, _}.
 lget(PoolPid, Key) ->
-    hd(mget(PoolPid, [Key], 0, ?'CBE_LGET')).
+    hd(mget(PoolPid, [Key], 0, 0)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% SETS OPERATIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 
-%% @equiv lset_add(PoolPid, NS, Set, Key, Ldt, Value)
+%% @equiv lset_add(PoolPid, NS, Set, Key, Ldt, Value, Timeout)
 -spec lset_add(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
 lset_add(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
-    execute(PoolPid, {lset_add, NS, Set, Key, Ldt, 
+    execute(PoolPid, {lset_store, lset_add, NS, Set, Key, Ldt, 
                       Value,
                       Timeout}).
 
-%% @equiv lset_remove(PoolPid, NS, Set, Key, Ldt, Value)
+%% @equiv lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout)
 -spec lset_remove(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
 lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
-    execute(PoolPid, {lset_remove, NS, Set, Key, Ldt, 
+    execute(PoolPid, {lset_store, lset_remove, NS, Set, Key, Ldt, 
                       Value,
                       Timeout}).
 
-%% @equiv lset_get(PoolPid, NS, Set, Key, Ldt)
+%% @equiv lset_get(PoolPid, NS, Set, Key, Ldt, Timeout)
 -spec lset_get(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
 lset_get(PoolPid, NS, Set, Key, Ldt, Timeout) ->
-    execute(PoolPid, {ldt_get, lset, NS, Set, Key, Ldt, 
+    execute(PoolPid, {lset_get, lset_get, NS, Set, Key, Ldt, 
                       Timeout}).
 
-%% @equiv lset_size(PoolPid, NS, Set, Key, Ldt)
+%% @equiv lset_size(PoolPid, NS, Set, Key, Ldt, Timeout)
 -spec lset_size(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
 lset_size(PoolPid, NS, Set, Key, Ldt, Timeout) ->
-    execute(PoolPid, {ldt_size, lset, NS, Set, Key, Ldt, 
+    execute(PoolPid, {lset_get, lset_size, NS, Set, Key, Ldt, 
                       Timeout}).
