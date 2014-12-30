@@ -16,7 +16,7 @@ aerospike_test_() ->
 %%%===================================================================
 
 setup() ->
-    aerospike:start_link(?POOLNAME, 3),
+    aerospike:start_link(?POOLNAME, 1, "127.0.0.1", 3000, "", ""),
    %aerospike:remove(?POOLNAME, <<"testkey">>),
    %aerospike:remove(?POOLNAME, <<"testkey1">>),
    %aerospike:remove(?POOLNAME, <<"testkey2">>),
