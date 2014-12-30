@@ -87,27 +87,46 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
 {
     unsigned arg_length;
 
+    // namespace
     if (!enif_get_list_length(env, argv[0], &arg_length)) goto error0;
     char *ns = (char *) malloc(arg_length + 1);
     if (!enif_get_string(env, argv[0], ns, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
 
+    // set
     if (!enif_get_list_length(env, argv[1], &arg_length)) goto error1;
     char *set = (char *) malloc(arg_length + 1);
     if (!enif_get_string(env, argv[1], set, arg_length + 1, ERL_NIF_LATIN1)) goto error2;
 
-    if (!enif_get_list_length(env, argv[2], &arg_length)) goto error2;
-    char *key_str = (char *) malloc(arg_length + 1);
-    if (!enif_get_string(env, argv[2], key_str, arg_length + 1, ERL_NIF_LATIN1)) goto error3;
+    int64_t i64_val;
+    ErlNifBinary val_binary;
 
-    // Initialize the test as_key object. We won't need to destroy it since it
-    // isn't being created on the heap or with an external as_key_value.
-    if(!as_key_init_strp(key, ns, set, key_str, false)) goto error4;
+    if (enif_get_int64(env, argv[2], (ErlNifSInt64*)&i64_val))
+    {
+        // key : integer
+        if(as_key_init_int64(key, ns, set, i64_val)) goto ok;
+    }
+    else if (enif_get_list_length(env, argv[2], &arg_length))
+    {
+        // key : string
+        char *strValue = (char *) malloc(arg_length + 1);
+        if (enif_get_string(env, argv[2], strValue, arg_length + 1, ERL_NIF_LATIN1)) 
+        {
+            if(as_key_init_strp(key, ns, set, strValue, false)) goto ok;
+        }
 
-    return key;
+        free(strValue);
+    }
+    else if (enif_inspect_iolist_as_binary(env, argv[2], &val_binary))
+    {
+        // key : binary
+        uint8_t *binValue = malloc(sizeof(uint8_t) * val_binary.size);
+        memcpy(binValue, val_binary.data, val_binary.size);
 
-    error4:
-    error3:
-    free(key_str);
+        if(as_key_init_rawp(key, ns, set, binValue, val_binary.size, false)) goto ok;
+        
+        free(binValue);
+    }
+
     error2:
     free(set);
     error1:
@@ -115,6 +134,9 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
     error0:
 
     return NULL;
+
+    ok:
+    return key;
 }
 
 /*

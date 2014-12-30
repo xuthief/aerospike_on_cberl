@@ -6,6 +6,8 @@
 
 void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
+    DEBUG_TRACE("begin args");
+
     ldt_store_args_t* args = (ldt_store_args_t*)enif_alloc(sizeof(ldt_store_args_t));
 
     // ns, set, key
@@ -19,6 +21,8 @@ void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
     // value
     if (!(args->p_value=new_val_from_arg(env, argv[5]))) goto error3;
+
+    DEBUG_TRACE("end args");
 
     return args;
 

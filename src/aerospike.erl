@@ -24,6 +24,7 @@
 -export([lenqueue/4, ldequeue/3, lremove/4, lget/2]).
 %sets opts
 -export([lset_add/7, lset_remove/7, lset_get/6, lset_size/6]).
+-export([lset_add/6, lset_remove/6, lset_get/5, lset_size/5]).
 
 %% @doc Create an instance of libaerospike
 %% hosts A list of hosts:port separated by ';' to the
@@ -433,6 +434,9 @@ lset_add(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
                       Value,
                       Timeout}).
 
+lset_add(PoolPid, NS, Set, Key, Ldt, Value) ->
+    lset_add(PoolPid, NS, Set, Key, Ldt, Value, -1).
+
 %% @equiv lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout)
 -spec lset_remove(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
 lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
@@ -440,14 +444,23 @@ lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
                       Value,
                       Timeout}).
 
+lset_remove(PoolPid, NS, Set, Key, Ldt, Value) ->
+    lset_remove(PoolPid, NS, Set, Key, Ldt, Value, -1).
+
 %% @equiv lset_get(PoolPid, NS, Set, Key, Ldt, Timeout)
 -spec lset_get(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
 lset_get(PoolPid, NS, Set, Key, Ldt, Timeout) ->
     execute(PoolPid, {lset_get, lset_get, NS, Set, Key, Ldt, 
                       Timeout}).
 
+lset_get(PoolPid, NS, Set, Key, Ldt) ->
+    lset_get(PoolPid, NS, Set, Key, Ldt, -1).
+
 %% @equiv lset_size(PoolPid, NS, Set, Key, Ldt, Timeout)
 -spec lset_size(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
 lset_size(PoolPid, NS, Set, Key, Ldt, Timeout) ->
     execute(PoolPid, {lset_get, lset_size, NS, Set, Key, Ldt, 
                       Timeout}).
+
+lset_size(PoolPid, NS, Set, Key, Ldt) ->
+    lset_size(PoolPid, NS, Set, Key, Ldt, -1).
