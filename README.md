@@ -23,6 +23,8 @@ Then, get git submodules:
     git submodule update --init --remote
     cd c
     git submodule update --init --remote
+    make
+    cd ..
 
 Then:
 

@@ -99,3 +99,12 @@ distclean: clean
 	- rm -rvf $(CURDIR)/deps
 
 rebuild: distclean deps compile escript dialyzer test
+
+.PHONY: c
+c:
+	git submodule update --init --recursive
+	make -C c modules
+
+.PHONY: clean-c
+clean-c:
+	make -C c clean
