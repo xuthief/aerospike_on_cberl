@@ -34,14 +34,14 @@ test_sadd(_) ->
     Set = "test-set",
     Key = "test-key",
     Key2 = <<"testkey2">>,
-    Value = 1,
+    Value = 1000,
     Ldt = "mylset",
-    ok = aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 100),
+    aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 1000),
     Get1 = aerospike:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 100),
-    ok = aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
+    aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
     Get2 = aerospike:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 0),
     Value2 = 2,
-    ok = aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value2),
+    aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value2),
     Get3 = aerospike:lset_get(?POOLNAME, Ns, Set, Key, Ldt),
     GetFail = aerospike:lset_get(?POOLNAME, Ns, Set, Key2, Ldt),
     [?_assertMatch({ok, [Value]}, Get1)
@@ -57,8 +57,8 @@ test_size(_) ->
     Key2 = <<"testkey2">>,
 
     Ldt = "mylset",
+
     SismemberValue = aerospike:lset_size(?POOLNAME, Ns, Set, Key, Ldt),
-    Ldt = "mylset",
     SismemberFail = aerospike:lset_size(?POOLNAME, Ns, Set, Key, Ldt),
     SismemberFail2 = aerospike:lset_size(?POOLNAME, Ns, Set, Key2, Ldt),
     [

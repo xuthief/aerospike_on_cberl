@@ -4,13 +4,6 @@
 #include "as.h"
 #include <aerospike/as_arraylist_iterator.h>
 
-#define ERROR_MSG_LEN (512)
-char *format_as_error(const char *api, as_error *err) {
-    static char str_error[ERROR_MSG_LEN];
-    snprintf(str_error, ERROR_MSG_LEN, "%s: %d - %s", api, err->code, err->message);
-    return str_error;
-}
-
 void *as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     DEBUG_TRACE("begin connect arg");
@@ -74,13 +67,12 @@ ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
 
     if (as_res != AEROSPIKE_OK) {
 		aerospike_destroy(p_as);
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error("aerospike_connect", &err), ERL_NIF_LATIN1));
+        return A_AS_ERROR(env, err);
 	}
 
     DEBUG_TRACE("end connect, ok");
 
-    return enif_make_atom(env, "ok");
+    return A_OK(env);
 }
 
 as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[])

@@ -430,22 +430,20 @@ lget(PoolPid, Key) ->
 %% @equiv lset_add(PoolPid, NS, Set, Key, Ldt, Value, Timeout)
 -spec lset_add(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
 lset_add(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
-    execute(PoolPid, {lset_store, lset_add, NS, Set, Key, Ldt, 
-                      Value,
-                      Timeout}).
-
+    execute(PoolPid, {lset_store, lset_add, NS, Set, Key, Ldt, Timeout, 
+                      Value
+                      }).
 lset_add(PoolPid, NS, Set, Key, Ldt, Value) ->
-    lset_add(PoolPid, NS, Set, Key, Ldt, Value, -1).
+    lset_add(PoolPid, NS, Set, Key, Ldt, Value, 0).
 
 %% @equiv lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout)
 -spec lset_remove(pid(), ns(), set(), key(), ldt(), value(), timeout()) -> ok | {error, _}.
 lset_remove(PoolPid, NS, Set, Key, Ldt, Value, Timeout) ->
-    execute(PoolPid, {lset_store, lset_remove, NS, Set, Key, Ldt, 
-                      Value,
-                      Timeout}).
-
+    execute(PoolPid, {lset_store, lset_remove, NS, Set, Key, Ldt, Timeout,
+                      Value
+                      }).
 lset_remove(PoolPid, NS, Set, Key, Ldt, Value) ->
-    lset_remove(PoolPid, NS, Set, Key, Ldt, Value, -1).
+    lset_remove(PoolPid, NS, Set, Key, Ldt, Value, 0).
 
 %% @equiv lset_get(PoolPid, NS, Set, Key, Ldt, Timeout)
 -spec lset_get(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
@@ -454,7 +452,7 @@ lset_get(PoolPid, NS, Set, Key, Ldt, Timeout) ->
                       Timeout}).
 
 lset_get(PoolPid, NS, Set, Key, Ldt) ->
-    lset_get(PoolPid, NS, Set, Key, Ldt, -1).
+    lset_get(PoolPid, NS, Set, Key, Ldt, 0).
 
 %% @equiv lset_size(PoolPid, NS, Set, Key, Ldt, Timeout)
 -spec lset_size(pid(), ns(), set(), key(), ldt(), timeout()) -> ok | {error, _}.
@@ -463,4 +461,4 @@ lset_size(PoolPid, NS, Set, Key, Ldt, Timeout) ->
                       Timeout}).
 
 lset_size(PoolPid, NS, Set, Key, Ldt) ->
-    lset_size(PoolPid, NS, Set, Key, Ldt, -1).
+    lset_size(PoolPid, NS, Set, Key, Ldt, 0).

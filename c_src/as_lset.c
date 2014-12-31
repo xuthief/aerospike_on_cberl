@@ -49,12 +49,11 @@ ERL_NIF_TERM as_ldt_lset_add(ErlNifEnv* env, handle_t* handle, void* obj)
 	// Add an integer value to the set.
     res = aerospike_lset_add(&handle->instance, &err, &args->policy, &args->key, &args->ldt, args->p_value);
 
-    if(res != AEROSPIKE_OK) {
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
-    }
+    DEBUG_TRACE("end res: %d", res);
 
-    DEBUG_TRACE("end");
+    if(res != AEROSPIKE_OK)
+        return A_AS_ERROR(env, err);
+
     return A_OK(env);
 }
 
@@ -68,10 +67,8 @@ ERL_NIF_TERM as_ldt_lset_remove(ErlNifEnv* env, handle_t* handle, void* obj)
 	// Add an integer value to the set.
     res = aerospike_lset_remove(&handle->instance, &err, &args->policy, &args->key, &args->ldt, args->p_value);
 
-    if(res != AEROSPIKE_OK) {
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
-    }
+    if(res != AEROSPIKE_OK)
+        return A_AS_ERROR(env, err);
 
     return A_OK(env);
 }
@@ -112,10 +109,8 @@ ERL_NIF_TERM as_ldt_lset_get(ErlNifEnv* env, handle_t* handle, void* obj)
     res = aerospike_lset_filter(&handle->instance, &err, NULL, &args->key, &args->ldt, NULL, NULL,
             &p_list);
 
-    if(res != AEROSPIKE_OK) {
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
-    }
+    if(res != AEROSPIKE_OK)
+        return A_AS_ERROR(env, err);
 
     ERL_NIF_TERM* results;
     uint32_t nresults = as_list_size(p_list);
@@ -139,7 +134,7 @@ ERL_NIF_TERM as_ldt_lset_get(ErlNifEnv* env, handle_t* handle, void* obj)
     
     free(results);
 
-    return enif_make_tuple2(env, A_OK(env), returnValue);
+    return A_OK_VALUE(env, returnValue);
 }
 
 ERL_NIF_TERM as_ldt_lset_size(ErlNifEnv* env, handle_t* handle, void* obj)
@@ -152,13 +147,11 @@ ERL_NIF_TERM as_ldt_lset_size(ErlNifEnv* env, handle_t* handle, void* obj)
 
     res = aerospike_lset_size(&handle->instance, &err, &args->policy, &args->key, &args->ldt, &nsize); 
 
-    if(res != AEROSPIKE_OK) {
-        return enif_make_tuple2(env, enif_make_atom(env, "error"),
-                enif_make_string(env, format_as_error(__PRETTY_FUNCTION__, &err), ERL_NIF_LATIN1));
-    }
+    if(res != AEROSPIKE_OK)
+        return A_AS_ERROR(env, err);
 
     ERL_NIF_TERM returnValue;
     returnValue = enif_make_uint(env, nsize);
     
-    return enif_make_tuple2(env, A_OK(env), returnValue);
+    return A_OK_VALUE(env, returnValue);
 }

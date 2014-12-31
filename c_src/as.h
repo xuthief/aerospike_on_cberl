@@ -39,8 +39,6 @@ typedef struct connect_args {
     char*   pass;
 } connect_args_t;
 
-char *format_as_error(const char *api, as_error *err);
-
 as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[]);
 as_val* new_val_from_arg(ErlNifEnv* env, const ERL_NIF_TERM argv);
 as_ldt* init_ldt_from_arg(ErlNifEnv* env, as_ldt *p_ldt, as_ldt_type ldt_type, const ERL_NIF_TERM arg_ldt);
