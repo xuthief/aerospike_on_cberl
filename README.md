@@ -9,25 +9,23 @@ Tested on mac, debian squeeze and amazon linux.
 
 Quick Setup/Start
 ---------
-First you must have libaerospike installed. 
+First you must have lua5.1 installed. 
 
-On mac install [homebrew](http://mxcl.github.com/homebrew/,"homebrew") if you haven't already then run:
-
-    brew install https://github.com/aerospike/homebrew/raw/stable/Library/Formula/libaerospike.rb
-
-On Amazon linux:
-
-    sudo wget -O/etc/yum.repos.d/aerospike.repo http://packages.aerospike.com/rpm/aerospike-centos62-x86_64.repo
-    sudo yum check-update
-    sudo yum install --enablerepo=epel libaerospike2 libaerospike-devel
-
-For installing libaerospike on other systems visit http://www.aerospike.com/develop/c/current.
-
+    curl -R -O http://www.lua.org/ftp/lua-5.1.tar.gz
 
 Then:
 
     git clone git@github.com:chitika/aerospike.git
+
+Then, get git submodules:
+
     cd aerospike
+    git submodule update --init --remote
+    cd c
+    git submodule update --init --remote
+
+Then:
+
     ### assuming you have rebar in your path
     rebar get-deps compile
 

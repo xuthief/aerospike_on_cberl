@@ -234,6 +234,22 @@ as_policy_apply* init_policy_apply_from_arg(ErlNifEnv* env, as_policy_apply *p_p
     return NULL;
 }
 
+as_policy_remove* init_policy_remove_from_arg(ErlNifEnv* env, as_policy_remove *p_policy, const ERL_NIF_TERM arg_timeout)
+{
+    uint32_t ldt_timeout;
+    if (!enif_get_uint(env, arg_timeout, &ldt_timeout)) goto error0;
+
+    if (!as_policy_remove_init(p_policy)) goto error0;
+    p_policy->timeout = ldt_timeout;
+
+    return p_policy;
+
+    error0:
+
+    return NULL;
+}
+
+
 ERL_NIF_TERM make_nif_term_from_as_val(ErlNifEnv* env, const as_val *p_val)
 {
     if(p_val->type == AS_INTEGER)

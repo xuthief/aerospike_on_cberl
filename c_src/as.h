@@ -43,6 +43,7 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
 as_val* new_val_from_arg(ErlNifEnv* env, const ERL_NIF_TERM argv);
 as_ldt* init_ldt_from_arg(ErlNifEnv* env, as_ldt *p_ldt, as_ldt_type ldt_type, const ERL_NIF_TERM arg_ldt);
 as_policy_apply* init_policy_apply_from_arg(ErlNifEnv* env, as_policy_apply *p_policy, const ERL_NIF_TERM arg_timeout);
+as_policy_remove* init_policy_remove_from_arg(ErlNifEnv* env, as_policy_remove *p_policy, const ERL_NIF_TERM arg_timeout);
 
 ERL_NIF_TERM make_nif_term_from_as_val(ErlNifEnv* env, const as_val *p_val);
 

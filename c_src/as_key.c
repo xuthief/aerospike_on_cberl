@@ -14,7 +14,7 @@ void* as_key_remove_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     if (!init_key_from_args(env, &args->key, argv)) goto error0;
 
     // timeout
-    if (!init_policy_apply_from_arg(env, &args->policy, argv[3])) goto error1;
+    if (!init_policy_remove_from_arg(env, &args->policy, argv[3])) goto error1;
 
     DEBUG_TRACE("end args");
 
