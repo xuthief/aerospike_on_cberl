@@ -3,6 +3,7 @@
 %%% @version 0.0.2
 
 -module(aerospike).
+-include("aerospike_error.hrl").
 -include("aerospike.hrl").
 
 -export([start_link/6]).
@@ -17,7 +18,7 @@
 -export([get_and_touch/3, get_and_lock/3, mget/2, mget/4, get/2, get/3, unlock/3,
          mget/3, getl/3, http/6, view/4, foldl/3, foldr/3, foreach/2]).
 %remove
--export([remove/2, flush/1, flush/2]).
+-export([remove/5, remove/4]).
 %design doc opertations
 -export([set_design_doc/3, remove_design_doc/2]).
 %queue opts
@@ -226,38 +227,12 @@ arithmetic(PoolPid, Key, OffSet, Exp, Create, Initial) ->
 %% @doc remove the value for given key
 %% Instance libaerospike instance to use
 %% Key key to  remove
--spec remove(pid(), key()) -> ok | {error, _}.
-remove(PoolPid, Key) ->
-    execute(PoolPid, {remove, Key, 0}).
-
-%% @doc flush all documents from the bucket
-%% Instance libaerospike Instance to use
-%% BucketName name of the bucket to flush
--spec flush(pid(), string()) -> ok | {error, _}.
-flush(PoolPid, BucketName) ->
-    FlushMarker = <<"__flush_marker_document__">>,
-    set(PoolPid, FlushMarker, 0, ""),
-    Path = string:join(["pools/default/buckets", BucketName, "controller/doFlush"], "/"),
-    Result = http(PoolPid, Path, "", "application/json", post, management),
-    handle_flush_result(PoolPid, FlushMarker, Result).
-
-%% @doc flush all documents from the current bucket
-%% Instance libaerospike Instance to use
--spec flush(pid()) -> ok | {error, _}.
-flush(PoolPid) ->
-    {ok, BucketName} = execute(PoolPid, bucketname),
-    flush(PoolPid, BucketName).
-
-handle_flush_result(_, _, {ok, 200, _}) -> ok;
-handle_flush_result(PoolPid, FlushMarker, Result={ok, 201, _}) ->
-    case get(PoolPid, FlushMarker) of
-        {_, {error, key_enoent}} -> ok;
-        _ ->
-            erlang:send_after(1000, self(), check_flush_done),
-            receive
-                check_flush_done -> handle_flush_result(PoolPid, FlushMarker, Result)
-            end
-    end.
+%% @equiv remove(PoolPid, NS, Set, Key, Timeout)
+-spec remove(pid(), ns(), set(), key(), timeout()) -> ok | {error, _}.
+remove(PoolPid, NS, Set, Key, Timeout) ->
+    execute(PoolPid, {remove, NS, Set, Key, Timeout}).
+remove(PoolPid, NS, Set, Key) ->
+    remove(PoolPid, NS, Set, Key, 0).
 
 %% @doc execute a command with the REST API
 %% PoolPid pid of connection pool

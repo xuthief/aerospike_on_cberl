@@ -16,10 +16,13 @@ aerospike_test_() ->
 %%%===================================================================
 
 setup() ->
-    aerospike:start_link(?POOLNAME, 1, "10.37.129.7", 3000, "", ""),
-    %aerospike:remove(?POOLNAME, <<"testkey">>),
-    %aerospike:remove(?POOLNAME, <<"testkey1">>),
-    %aerospike:remove(?POOLNAME, <<"testkey2">>),
+    Ns = "test",
+    Set = "test-set",
+    Key = "test-key",
+    Key2 = <<"testkey2">>,
+    {ok, _} = aerospike:start_link(?POOLNAME, 1, "10.37.129.7", 3000, "", ""),
+    aerospike:remove(?POOLNAME, Ns, Set, Key),
+    aerospike:remove(?POOLNAME, Ns, Set, Key2),
     ok.
 
 clean_up(_) ->
@@ -36,17 +39,17 @@ test_sadd(_) ->
     Key2 = <<"testkey2">>,
     Value = 1000,
     Ldt = "mylset",
-    aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 1000),
+    ok = aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 1000),
     Get1 = aerospike:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 100),
-    aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
+    _ADD2 = aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
     Get2 = aerospike:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 0),
     Value2 = 2,
-    aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value2),
+    _ADD3 = aerospike:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value2),
     Get3 = aerospike:lset_get(?POOLNAME, Ns, Set, Key, Ldt),
     GetFail = aerospike:lset_get(?POOLNAME, Ns, Set, Key2, Ldt),
     [?_assertMatch({ok, [Value]}, Get1)
-     ,?_assertMatch({Key, _, [Value]}, Get2)
-     ,?_assertMatch({Key, _, [Value, Value2]}, Get3)
+     ,?_assertMatch({ok, [Value]}, Get2)
+     ,?_assertMatch({ok, [Value, Value2]}, Get3)
      ,?_assertMatch({Key2, {error, key_enoent}}, GetFail)
     ].
 
