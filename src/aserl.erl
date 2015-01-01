@@ -2,9 +2,9 @@
 %%% @copyright 2012-2013 Chitika Inc.
 %%% @version 0.0.2
 
--module(aerospike).
--include("aerospike_error.hrl").
--include("aerospike.hrl").
+-module(aserl).
+-include("aserl_error.hrl").
+-include("aserl.hrl").
 
 -export([start_link/6]).
 -export([stop/1]).
@@ -27,9 +27,9 @@
 -export([lset_add/7, lset_remove/7, lset_get/6, lset_size/6]).
 -export([lset_add/6, lset_remove/6, lset_get/5, lset_size/5]).
 
-%% @doc Create an instance of libaerospike
+%% @doc Create an instance of libaserl
 %% hosts A list of hosts:port separated by ';' to the
-%%      administration port of the aerospike cluster. (ex:
+%%      administration port of the aserl cluster. (ex:
 %%      "host1;host2:9000;host3" would try to connect to
 %%      host1 on port 8091, if that fails it'll connect to
 %%      host2 on port 9000 etc).
@@ -42,7 +42,7 @@ start_link(PoolName, NumCon, Host, Port, Username, Password) ->
     SizeArgs = [{size, NumCon},
                 {max_overflow, 0}],
     PoolArgs = [{name, {local, PoolName}},
-                {worker_module, aerospike_worker}] ++ SizeArgs,
+                {worker_module, aserl_worker}] ++ SizeArgs,
     WorkerArgs = [{host, Host},
 		  {port, Port},
 		  {username, Username},
@@ -96,7 +96,7 @@ prepend(PoolPid, Cas, Key, Value) ->
     store(PoolPid, prepend, Key, Value, str, 0, Cas).
 
 %% @doc Touch (set expiration time) on the given key
-%% PoolPid libaerospike instance to use
+%% PoolPid libaserl instance to use
 %% Key key to touch
 %% ExpTime a new expiration time for the item
 
@@ -164,7 +164,7 @@ unlock(PoolPid, Key, Cas) ->
     execute(PoolPid, {unlock, Key, Cas}).
 
 %% @doc main store function takes care of all storing
-%% Instance libaerospike instance to use
+%% Instance libaserl instance to use
 %% Op add | replace | set | append | prepend
 %%          add : Add the item to the cache, but fail if the object exists already
 %%          replace: Replace the existing object in the cache
@@ -187,7 +187,7 @@ store(PoolPid, Op, Key, Value, TranscoderOpts, Exp, Cas) ->
                        TranscoderOpts, Exp, Cas}).
 
 %% @doc get the value for the given key
-%% Instance libaerospike instance to use
+%% Instance libaserl instance to use
 %% HashKey the key to use for hashing
 %% Key the key to get
 %% Exp When the object should expire
@@ -197,13 +197,13 @@ mget(PoolPid, Keys, Exp) ->
     execute(PoolPid, {mget, Keys, Exp, 0}).
 
 mget(PoolPid, Keys, Exp, {trans, TranscoderOpts}) ->
-    execute(PoolPid, {mget, Keys, Exp, 0, {trans, aerospike_transcoder:flag(TranscoderOpts)}});
+    execute(PoolPid, {mget, Keys, Exp, 0, {trans, aserl_transcoder:flag(TranscoderOpts)}});
 
 mget(PoolPid, Keys, Exp, Type) ->
     execute(PoolPid, {mget, Keys, Exp, 0, Type}).
 
 %% @doc Get an item with a lock that has a timeout
-%% Instance libaerospike instance to use
+%% Instance libaserl instance to use
 %%  HashKey the key to use for hashing
 %%  Key the key to get
 %%  Exp When the lock should expire
@@ -212,7 +212,7 @@ getl(PoolPid, Key, Exp) ->
     execute(PoolPid, {mget, [Key], Exp, 1}).
 
 %% @doc perform an arithmetic operation on the given key
-%% Instance libaerospike instance to use
+%% Instance libaserl instance to use
 %% Key key to perform on
 %% Delta The amount to add / subtract
 %% Exp When the object should expire
@@ -225,7 +225,7 @@ arithmetic(PoolPid, Key, OffSet, Exp, Create, Initial) ->
     execute(PoolPid, {arithmetic, Key, OffSet, Exp, Create, Initial}).
 
 %% @doc remove the value for given key
-%% Instance libaerospike instance to use
+%% Instance libaserl instance to use
 %% Key key to  remove
 %% @equiv remove(PoolPid, NS, Set, Key, Timeout)
 -spec remove(pid(), ns(), set(), key(), timeout()) -> ok | {error, _}.

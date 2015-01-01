@@ -3,7 +3,7 @@
 
 #include <aerospike/aerospike.h>
 #include "queue.h"
-#include "aerospike_nif.h"
+#include "aserl_nif.h"
 
 #define A_OK(env)                   enif_make_atom(env, "ok")
 #define A_OK_VALUE(env, val)        enif_make_tuple2(env, A_OK(env), val)

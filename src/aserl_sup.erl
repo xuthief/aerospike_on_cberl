@@ -1,5 +1,5 @@
 
--module(aerospike_sup).
+-module(aserl_sup).
 
 -behaviour(supervisor).
 

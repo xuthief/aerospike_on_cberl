@@ -1,6 +1,6 @@
--module(aerospike_worker).
+-module(aserl_worker).
 -behaviour(poolboy_worker).
--include("aerospike.hrl").
+-include("aserl.hrl").
 -behaviour(gen_server).
 
 %% API
@@ -45,8 +45,8 @@ start_link(Args) ->
 %%--------------------------------------------------------------------
 init([{host, Host}, {port, Port}, {username, Username}, {password, Password}]) ->
     process_flag(trap_exit, true),
-    {ok, Handle} = aerospike_nif:new(),
-    ok = aerospike_nif:control(Handle, op(connect), [Host, Port, Username, Password]),
+    {ok, Handle} = aserl_nif:new(),
+    ok = aserl_nif:control(Handle, op(connect), [Host, Port, Username, Password]),
     receive
         ok -> {ok, #instance{handle = Handle}};
         {error, Error} -> {stop, Error}
@@ -69,26 +69,26 @@ init([{host, Host}, {port, Port}, {username, Username}, {password, Password}]) -
 %%--------------------------------------------------------------------
 handle_call({mtouch, Keys, ExpTimesE}, _From, 
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(mtouch), [Keys, ExpTimesE]),
+    ok = aserl_nif:control(Handle, op(mtouch), [Keys, ExpTimesE]),
     receive
         Reply -> {reply, Reply, State}
     end;
 handle_call({unlock, Key, Cas}, _From, 
             State = #instance{handle = Handle}) ->
-    aerospike_nif:control(Handle, op(unlock), [Key, Cas]),
+    aserl_nif:control(Handle, op(unlock), [Key, Cas]),
     receive
         Reply -> {reply, Reply, State}
     end;
 
 handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
     State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = aerospike_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
+    ok = aserl_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
     Reply = receive
                 {error, Error} -> {error, Error};
                 {ok, Results} ->
                     lists:map(fun(Result) ->
                         case Result of
-                            {Cas, _Flag, Key, Value} ->  %% won't use Flag from aerospike bucket
+                            {Cas, _Flag, Key, Value} ->  %% won't use Flag from aserl bucket
                                 DecodedValue = Transcoder:decode_value(Flag, Value),
                                 {Key, Cas, DecodedValue};
                             {_Key, {error, _Error}} ->
@@ -100,7 +100,7 @@ handle_call({mget, Keys, Exp, Lock, {trans, Flag}}, _From,
 
 handle_call({mget, Keys, Exp, Lock, Type}, _From, 
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = aerospike_nif:control(Handle, op(mget), [Keys, Exp, Lock, Type]),
+    ok = aserl_nif:control(Handle, op(mget), [Keys, Exp, Lock, Type]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, Results} ->
@@ -118,7 +118,7 @@ handle_call({mget, Keys, Exp, Lock, Type}, _From,
 
 handle_call({mget, Keys, Exp, Lock}, _From, 
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = aerospike_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
+    ok = aserl_nif:control(Handle, op(mget), [Keys, Exp, Lock, 0]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, Results} ->
@@ -135,7 +135,7 @@ handle_call({mget, Keys, Exp, Lock}, _From,
     {reply, Reply, State};
 handle_call({arithmetic, Key, OffSet, Exp, Create, Initial}, _From,
             State = #instance{handle = Handle, transcoder = Transcoder}) ->
-    ok = aerospike_nif:control(Handle, op(arithmetic), [Key, OffSet, Exp, Create, Initial]),
+    ok = aserl_nif:control(Handle, op(arithmetic), [Key, OffSet, Exp, Create, Initial]),
     Reply = receive
         {error, Error} -> {error, Error};
         {ok, {Cas, Flag, Value}} ->
@@ -145,20 +145,20 @@ handle_call({arithmetic, Key, OffSet, Exp, Create, Initial}, _From,
     {reply, Reply, State};
 handle_call({remove, Key, N}, _From,
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(remove), [Key, N]),
+    ok = aserl_nif:control(Handle, op(remove), [Key, N]),
     receive
         Reply -> {reply, Reply, State}
     end;
 handle_call({http, Path, Body, ContentType, Method, Chunked}, _From,
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(http), [Path, Body, ContentType, Method, Chunked]),
+    ok = aserl_nif:control(Handle, op(http), [Path, Body, ContentType, Method, Chunked]),
     receive
         Reply -> {reply, Reply, State}
     end;
 
 handle_call({lset_store, Type, NS, Set, Key, Ldt, Value, Timeout}, _From, 
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(Type), [NS, Set, Key, Ldt, Value, Timeout]),
+    ok = aserl_nif:control(Handle, op(Type), [NS, Set, Key, Ldt, Value, Timeout]),
     receive
         Reply -> {reply, Reply, State}
     end;
@@ -166,7 +166,7 @@ handle_call({lset_store, Type, NS, Set, Key, Ldt, Value, Timeout}, _From,
 handle_call({lset_get, Type, NS, Set, Key, Ldt, Timeout}, 
             _From, 
             State = #instance{handle = Handle}) ->
-    ok = aerospike_nif:control(Handle, op(Type), [
+    ok = aserl_nif:control(Handle, op(Type), [
                 NS, Set, Key, Ldt, Timeout]),
     receive
         Reply -> {reply, Reply, State}
@@ -216,7 +216,7 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State = #instance{handle = Handle}) ->
-    aerospike_nif:destroy(Handle),
+    aserl_nif:destroy(Handle),
     ok.
 
 %%--------------------------------------------------------------------

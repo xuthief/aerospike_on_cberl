@@ -1,6 +1,6 @@
 #include <string.h>
 #include <stdio.h>
-#include "aerospike_nif.h"
+#include "aserl_nif.h"
 #include "as.h"
 #include "as_lset.h"
 
@@ -11,14 +11,14 @@ static void aerospike_handle_cleanup(ErlNifEnv* env, void* arg) {}
 static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
     ErlNifResourceFlags flags = ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER;
-    aerospike_handle =  enif_open_resource_type(env, "aerospike_nif",
+    aerospike_handle =  enif_open_resource_type(env, "aserl_nif",
                                                  "aerospike_handle",
                                                  &aerospike_handle_cleanup,
                                                  flags, 0);
     return 0;
 }
 
-NIF(aerospike_nif_new)
+NIF(aserl_nif_new)
 {
     handle_t* handle = enif_alloc_resource(aerospike_handle, sizeof(handle_t));
     handle->queue = queue_new();
@@ -43,7 +43,7 @@ NIF(aerospike_nif_new)
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_resource(env, handle));
 }
 
-NIF(aerospike_nif_control)
+NIF(aserl_nif_control)
 {
     handle_t* handle;
 
@@ -99,7 +99,7 @@ NIF(aerospike_nif_control)
     return A_OK(env);
 }
 
-NIF(aerospike_nif_destroy) {
+NIF(aserl_nif_destroy) {
     handle_t * handle;
     void* resp;
     assert_badarg(enif_get_resource(env, argv[0], aerospike_handle, (void **) &handle), env);      
@@ -137,9 +137,9 @@ static void* worker(void *obj)
 }
 
 static ErlNifFunc nif_funcs[] = {
-    {"new", 0, aerospike_nif_new},
-    {"control", 3, aerospike_nif_control},
-    {"destroy", 1, aerospike_nif_destroy}
+    {"new", 0, aserl_nif_new},
+    {"control", 3, aserl_nif_control},
+    {"destroy", 1, aserl_nif_destroy}
 };
 
-ERL_NIF_INIT(aerospike_nif, nif_funcs, load, NULL, NULL, NULL);
+ERL_NIF_INIT(aserl_nif, nif_funcs, load, NULL, NULL, NULL);
