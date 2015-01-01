@@ -1,3 +1,4 @@
 [submodule "c"]
-	path = c
-	url = https://github.com/aerospike/aerospike-client-c.git
+    path = c
+    url = https://github.com/aerospike/aerospike-client-c.git
+    ignore = untracked
