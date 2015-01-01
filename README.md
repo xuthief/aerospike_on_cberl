@@ -20,16 +20,12 @@ Then:
 Then, get git submodules:
 
     cd aerospike
-    git submodule update --init --remote
-    cd c
-    git submodule update --init --remote
-    make
-    cd ..
+    git submodule update --init --remote --recursive
 
 Then:
 
     ### assuming you have rebar in your path
-    rebar get-deps compile
+    ./rebar get-deps compile
 
 Or just include it as a dependency in your rebar config.
     
@@ -51,38 +47,6 @@ Make sure you have aerospike running on localhost or use aerospike:new(Host) ins
     {<<"fkey">>, ReturnedCasValue, <<"aerospike">>}
 
 For more information on all the functions -> ./rebar doc (most of documentation is out of date right now)
-
-Views
------
-
-aerospike has new (experimental) support for querying views via the view/4 functions:
-
-    aerospike:view(default, "all", "all", []).
-    {ok,{1,
-     [[{<<"id">>,<<"test">>},
-       {<<"key">>,<<"test">>},
-       {<<"value">>,null}]]}}
-
-Shorthand for foldl, foldr and foreach are also provided.
-
-Custom Transcoders
------
-
-You can have your custom transcoders, your transcoder must export 3 functions:
-
-__encode_value/2:__
-
-Takes in an encoder|encoder list and the original value and turns it into a binary.
-
-__decode_value/2:__
-
-Takes in a flag (from aerospike) and the value (as binary) and turns it into the actual value.
-
-__flag/1:__
-
-Turns an encoder_name (or list of them) into an integer. This value is sent to CB during set operations and this is what you get in decode value. You must return a value for 'standart' encoder if you are not planning to specify an encoder for every set operation.
-
-Check out [aerospike_transcoder.erl](https://github.com/wcummings/aerospike/blob/master/src/aerospike_transcoder.erl) it is pretty straightforward.
 
 Performance
 -------
