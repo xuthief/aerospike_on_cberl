@@ -6,7 +6,7 @@
 -include("aserl_error.hrl").
 -include("aserl.hrl").
 
--export([start_link/6]).
+-export([start_link/1, start_link/2, start_link/4, start_link/6]).
 -export([stop/1]).
 %store operations
 -export([add/4, add/5, replace/4, replace/5, set/4, set/5, store/7]).
@@ -27,16 +27,21 @@
 -export([lset_add/7, lset_remove/7, lset_get/6, lset_size/6]).
 -export([lset_add/6, lset_remove/6, lset_get/5, lset_size/5]).
 
-%% @doc Create an instance of libaserl
-%% hosts A list of hosts:port separated by ';' to the
-%%      administration port of the aserl cluster. (ex:
-%%      "host1;host2:9000;host3" would try to connect to
-%%      host1 on port 8091, if that fails it'll connect to
-%%      host2 on port 9000 etc).
-%% Username the username to use
+%% @doc Create an instance of libaerospike
+%% PoolName The aerospike connection pool to use
+%% NumCon The aerospike connection pool count
+%% Host (ex: "127.0.0.1" etc).
+%% Port (ex: 3000).
+%% Username The username to use
 %% Password The password
-%% bucket The bucket to connect to
+%%
 %% @equiv start_link(PoolName, NumCon, Host, Username, Password).
+start_link(PoolName) ->
+    start_link(PoolName, 1).
+start_link(PoolName, NumCon) ->
+    start_link(PoolName, NumCon, "localhost", 3000).
+start_link(PoolName, NumCon, Host, Port) ->
+    start_link(PoolName, NumCon, Host, Port, "", "").
 -spec start_link(atom(), integer(), string(), integer(), string(), string()) -> {ok, pid()} | {error, _}.
 start_link(PoolName, NumCon, Host, Port, Username, Password) ->
     SizeArgs = [{size, NumCon},

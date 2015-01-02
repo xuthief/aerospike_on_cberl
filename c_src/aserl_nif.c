@@ -18,6 +18,20 @@ static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
     return 0;
 }
 
+static int reload(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
+{
+    return 0;
+}
+
+static int upgrade(ErlNifEnv* env, void** priv, void** old_priv_data, ERL_NIF_TERM load_info)
+{
+    return 0;
+}
+
+static void unload(ErlNifEnv* env, void* priv)
+{
+}
+
 NIF(aserl_nif_new)
 {
     handle_t* handle = enif_alloc_resource(aerospike_handle, sizeof(handle_t));
@@ -142,4 +156,4 @@ static ErlNifFunc nif_funcs[] = {
     {"destroy", 1, aserl_nif_destroy}
 };
 
-ERL_NIF_INIT(aserl_nif, nif_funcs, load, NULL, NULL, NULL);
+ERL_NIF_INIT(aserl_nif, nif_funcs, load, reload, upgrade, unload);
