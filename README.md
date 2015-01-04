@@ -28,7 +28,27 @@ Then:
     ./rebar get-deps compile
 
 Or just include it as a dependency in your rebar config.
-    
+
+   
+
+Aserl-error
+-------
+
+```
+    echo -n '#include "aserl_error.h"
+
+    char* aserl_error_status_string(as_status as_res) {
+            switch (as_res) {
+    ' > c_src/aserl_error.c
+
+    cat c/src/include/aerospike/as_status.h | grep "AEROSPIKE_[A-Z_]*\>.*=" | sed 's/^.*AEROSPIKE_/AEROSPIKE_/g' | sed 's/[ ]*//g' | sed "s/`echo -e \\\t`*//g" | sed "s/,*//g" | awk -F"=" '!($2 in a){a[$2];print "\t\tcase "$1":\n\t\t\treturn \""tolower($1)"\";"}' >> c_src/aserl_error.c
+
+    echo -n '
+            }
+                return "aerospike_err_unkown";
+    }' >> c_src/aserl_error.c
+```
+   
 
 Example
 -------
