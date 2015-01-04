@@ -19,7 +19,7 @@ aserl_test_() ->
 
 setup() ->
     ?trace("start_link ~p", [?POOLNAME]),
-    {ok, _} = aserl:start_link(?POOLNAME, 1, "abj-as-3.yunba.io", 3000),
+    aserl:start_link(?POOLNAME, 1, "abj-as-3.yunba.io", 3000),
     ok.
 
 clean_up(_) ->

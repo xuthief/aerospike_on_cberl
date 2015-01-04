@@ -10,7 +10,7 @@
 #include <aerospike/as_record.h>
 #include <aerospike/as_status.h>
 
-#if 1
+#if 0
 #define DEBUG_TRACE(fmt, ...) do { fprintf(stderr, "[TRACE] %s [Line %d] "fmt"\n", __PRETTY_FUNCTION__, __LINE__,  ##__VA_ARGS__);} while(0)
 #else
 #define DEBUG_TRACE(fmt, ...) 

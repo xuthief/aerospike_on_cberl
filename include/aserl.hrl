@@ -20,7 +20,11 @@
 -type instance() :: #instance{}.
 
 
--define(eunit, true).
+-define(debug, false).
+-undef(debug).
+-define(eunit, false).
+-undef(eunit).
+
 -ifdef(debug).
 -define(trace(Str, X), io:format("Mod:~w line:~w ~p ~p~n", 
                                  [?MODULE, ?LINE, Str, X])).
