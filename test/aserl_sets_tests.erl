@@ -1,5 +1,6 @@
 -module(aserl_sets_tests).
 -include_lib("eunit/include/eunit.hrl").
+-include("aserl.hrl").
 -define(POOLNAME, testpool).
 
 aserl_test_() ->
@@ -20,7 +21,9 @@ setup() ->
     Set = "test-set",
     Key = "test-key",
     Key2 = <<"testkey2">>,
-    {ok, _} = aserl:start_link(?POOLNAME, 1, "10.37.129.7", 3000, "", ""),
+    ?trace("start_link ~p", [?POOLNAME]),
+    {ok, _} = aserl:start_link(?POOLNAME, 1, "abj-as-3.yunba.io", 3000),
+    ?trace("remove ~p", [[Key, Key2]]),
     aserl:remove(?POOLNAME, Ns, Set, Key),
     aserl:remove(?POOLNAME, Ns, Set, Key2),
     ok.
@@ -39,6 +42,7 @@ test_sadd(_) ->
     Key2 = <<"testkey2">>,
     Value = 1000,
     Ldt = "mylset",
+    ?trace("lset_add ~p - ~p", [Key, Value]),
     ok = aserl:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 1000),
     Get1 = aserl:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 100),
     _ADD2 = aserl:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),

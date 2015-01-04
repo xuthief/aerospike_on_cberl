@@ -143,17 +143,14 @@ handle_call({arithmetic, Key, OffSet, Exp, Create, Initial}, _From,
             {ok, Cas, DecodedValue}
     end,
     {reply, Reply, State};
-handle_call({remove, Key, N}, _From,
+handle_call({key_remove, NS, Set, Key, Timeout}, _From,
             State = #instance{handle = Handle}) ->
-    ok = aserl_nif:control(Handle, op(remove), [Key, N]),
+    ?trace("handle call key_remove ~p", [Key]),
+    ok = aserl_nif:control(Handle, op(key_remove), [NS, Set, Key, Timeout]),
     receive
-        Reply -> {reply, Reply, State}
-    end;
-handle_call({http, Path, Body, ContentType, Method, Chunked}, _From,
-            State = #instance{handle = Handle}) ->
-    ok = aserl_nif:control(Handle, op(http), [Path, Body, ContentType, Method, Chunked]),
-    receive
-        Reply -> {reply, Reply, State}
+        Reply -> 
+            ?trace("reply in handle call key_remove ~p ~p", [Key, Reply]),
+            {reply, Reply, State}
     end;
 
 handle_call({lset_store, Type, NS, Set, Key, Ldt, Value, Timeout}, _From, 
@@ -175,7 +172,7 @@ handle_call({lset_get, Type, NS, Set, Key, Ldt, Timeout},
 handle_call(bucketname, _From, State = #instance{bucketname = BucketName}) ->
     {reply, {ok, BucketName}, State};
 handle_call(_Request, _From, State) ->
-    Reply = ok,
+    Reply = {error, worker_recognized_command},
     {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
@@ -236,6 +233,7 @@ code_change(_OldVsn, State, _Extra) ->
 
 -spec op(atom()) -> integer().
 op(connect)     -> ?'CMD_CONNECT';
+op(key_remove)  -> ?'CMD_KEY_REMOVE';
 op(lset_add)    -> ?'CMD_LSET_ADD';
 op(lset_remove) -> ?'CMD_LSET_REMOVE';
 op(lset_get)    -> ?'CMD_LSET_GET';

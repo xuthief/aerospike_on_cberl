@@ -5,6 +5,7 @@
 
 // Command enum
 #define CMD_CONNECT         0
+#define CMD_KEY_REMOVE      1
 #define CMD_LSET_ADD        8
 #define CMD_LSET_REMOVE     9
 #define CMD_LSET_GET        10

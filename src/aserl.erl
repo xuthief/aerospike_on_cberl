@@ -235,7 +235,8 @@ arithmetic(PoolPid, Key, OffSet, Exp, Create, Initial) ->
 %% @equiv remove(PoolPid, NS, Set, Key, Timeout)
 -spec remove(pid(), ns(), set(), key(), timeout()) -> ok | {error, _}.
 remove(PoolPid, NS, Set, Key, Timeout) ->
-    execute(PoolPid, {remove, NS, Set, Key, Timeout}).
+    ?trace("remove ~p", [Key]),
+    execute(PoolPid, {key_remove, NS, Set, Key, Timeout}).
 remove(PoolPid, NS, Set, Key) ->
     remove(PoolPid, NS, Set, Key, 0).
 

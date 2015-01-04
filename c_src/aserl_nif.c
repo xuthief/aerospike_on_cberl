@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "aserl_nif.h"
 #include "as.h"
+#include "as_key.h"
 #include "as_lset.h"
 
 static ErlNifResourceType* aerospike_handle = NULL;
@@ -39,6 +40,8 @@ NIF(aserl_nif_new)
 
     handle->calltable[CMD_CONNECT]            	= as_connect;
     handle->args_calltable[CMD_CONNECT]       	= as_connect_args;
+    handle->calltable[CMD_KEY_REMOVE]           = as_key_remove;
+    handle->args_calltable[CMD_KEY_REMOVE]      = as_key_remove_args;
     handle->calltable[CMD_LSET_ADD]           	= as_ldt_lset_add;
     handle->args_calltable[CMD_LSET_ADD]      	= as_ldt_store_args;
     handle->calltable[CMD_LSET_REMOVE]        	= as_ldt_lset_remove;
