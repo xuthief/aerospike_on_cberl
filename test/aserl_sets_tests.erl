@@ -19,7 +19,7 @@ aserl_test_() ->
 
 setup() ->
     ?trace("start_link ~p", [?POOLNAME]),
-    aserl:start_link(?POOLNAME, 1, "abj-as-3.yunba.io", 3000),
+    aserl:start_link(?POOLNAME, 5, "abj-as-3.yunba.io", 3000),
     ok.
 
 clean_up(_) ->
@@ -29,14 +29,21 @@ clean_up(_) ->
 %%% Tests
 %%%===================================================================
 
+-define(Ns, "test").
+-define(Set, "test-set").
+-define(Ldt, "mylset").
+
+-define(Key1, "test-key").
+-define(Key2, <<"test-key2">>).
+-define(Value1, "test-value1").
+-define(Value2, <<"test-value1">>).
+
 do_clear(_) ->
-    Ns = "test",
-    Set = "test-set",
-    Key = "test-key",
-    Key2 = <<"testkey2">>,
-    ?trace("remove ~p", [[Key, Key2]]),
-    aserl:remove(?POOLNAME, Ns, Set, Key),
-    aserl:remove(?POOLNAME, Ns, Set, Key2),
+    ?Ns = "test",
+    ?Set = "test-set",
+    ?trace("remove ~p", [[?Key1, ?Key2]]),
+    aserl:remove(?POOLNAME, ?Ns, ?Set, ?Key1),
+    aserl:remove(?POOLNAME, ?Ns, ?Set, ?Key2),
     [].
 
 %%%===================================================================
@@ -44,58 +51,37 @@ do_clear(_) ->
 %%%===================================================================
 
 test_sadd(_) ->
-    Ns = "test",
-    Set = "test-set",
-    Key = "test-key",
-    Key2 = <<"testkey2">>,
-    Value = 1000,
-    Ldt = "mylset",
-    ?trace("lset_add ~p - ~p", [Key, Value]),
-    ok = aserl:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 1000),
-    Get1 = aserl:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 100),
-    _ADD2 = aserl:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
-    Get2 = aserl:lset_get(?POOLNAME, Ns, Set, Key, Ldt, 0),
-    Value2 = 2,
-    _ADD3 = aserl:lset_add(?POOLNAME, Ns, Set, Key, Ldt, Value2),
-    Get3 = aserl:lset_get(?POOLNAME, Ns, Set, Key, Ldt),
-    GetFail = aserl:lset_get(?POOLNAME, Ns, Set, Key2, Ldt),
-    [?_assertMatch({ok, [Value]}, Get1)
-     ,?_assertMatch({ok, [Value]}, Get2)
-     ,?_assertMatch({ok, [Value, Value2]}, Get3)
+    ?trace("lset_add ~p - ~p", [?Key1, ?Value1]),
+    ok = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 1000),
+    Get1 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, 100),
+    _ADD2 = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 0),
+    Get2 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, 0),
+    _ADD3 = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value2),
+    Get3 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt),
+    GetFail = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key2, ?Ldt),
+    [?_assertMatch({ok, [?Value1]}, Get1)
+     ,?_assertMatch({ok, [?Value1]}, Get2)
+     ,?_assertMatch({ok, [?Value1, ?Value2]}, Get3)
      ,?_assertMatch({error, {aerospike_err_record_not_found, _ErrorMsg}}, GetFail)
     ].
 
 test_size(_) ->
-    Ns = "test",
-    Set = "test-set",
-    Key = "test-key",
-    Key2 = <<"testkey2">>,
-
-    Ldt = "mylset",
-
-    SizeValue = aserl:lset_size(?POOLNAME, Ns, Set, Key, Ldt),
-    SizeFail = aserl:lset_size(?POOLNAME, Ns, Set, Key2, Ldt),
+    SizeValue = aserl:lset_size(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt),
+    SizeFail = aserl:lset_size(?POOLNAME, ?Ns, ?Set, ?Key2, ?Ldt),
     [
         ?_assertMatch({ok, 2}, SizeValue)
         ,?_assertMatch({error, {aerospike_err_record_not_found, _ErrorMsg}}, SizeFail)
         ].
 
 test_sremove(_) ->
-    Ns = "test",
-    Set = "test-set",
-    Key = "test-key",
-    Key2 = <<"testkey2">>,
-    Value = 1000,
-    Ldt = "mylset",
-    Value2 = 2,
-    Remove1 = aserl:lset_remove(?POOLNAME, Ns, Set, Key, Ldt, Value2, 0),
-    RemoveFail1 = aserl:lset_remove(?POOLNAME, Ns, Set, Key, Ldt, Value2, 0),
-    Get1 = aserl:lset_get(?POOLNAME, Ns, Set, Key, Ldt),
-    SRemove3 = aserl:lset_remove(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
-    Get2 = aserl:lset_get(?POOLNAME, Ns, Set, Key, Ldt),
-    RemoveFail3 = aserl:lset_remove(?POOLNAME, Ns, Set, Key, Ldt, Value, 0),
-    RemoveFail4 = aserl:lset_remove(?POOLNAME, Ns, Set, Key2, Ldt, Value, 0),
-    [?_assertMatch({ok, [Value]}, Get1),
+    Remove1 = aserl:lset_remove(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value2, 0),
+    RemoveFail1 = aserl:lset_remove(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value2, 0),
+    Get1 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt),
+    SRemove3 = aserl:lset_remove(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 0),
+    Get2 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt),
+    RemoveFail3 = aserl:lset_remove(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 0),
+    RemoveFail4 = aserl:lset_remove(?POOLNAME, ?Ns, ?Set, ?Key2, ?Ldt, ?Value1, 0),
+    [?_assertMatch({ok, [?Value1]}, Get1),
      ?_assertMatch(ok , Remove1),
      ?_assertMatch({error, {aerospike_err_large_item_not_found, _ErrorMsg}}, RemoveFail1),
      ?_assertMatch(ok , SRemove3),
