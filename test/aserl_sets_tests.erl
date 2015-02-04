@@ -1,6 +1,8 @@
 -module(aserl_sets_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("aserl.hrl").
+-include_lib("../include/aserl_error.hrl").
+
 -define(POOLNAME, testpool).
 
 aserl_test_() ->
@@ -62,7 +64,7 @@ test_sadd(_) ->
     [?_assertMatch({ok, [?Value1]}, Get1)
      ,?_assertMatch({ok, [?Value1]}, Get2)
      ,?_assertMatch({ok, [?Value1, ?Value2]}, Get3)
-     ,?_assertMatch({error, {aerospike_err_record_not_found, _ErrorMsg}}, GetFail)
+     ,?_assertMatch({error, {?AEROSPIKE_ERR_RECORD_NOT_FOUND, _ErrorMsg}}, GetFail)
     ].
 
 test_size(_) ->
@@ -70,7 +72,7 @@ test_size(_) ->
     SizeFail = aserl:lset_size(?POOLNAME, ?Ns, ?Set, ?Key2, ?Ldt),
     [
         ?_assertMatch({ok, 2}, SizeValue)
-        ,?_assertMatch({error, {aerospike_err_record_not_found, _ErrorMsg}}, SizeFail)
+        ,?_assertMatch({error, {?AEROSPIKE_ERR_RECORD_NOT_FOUND, _ErrorMsg}}, SizeFail)
         ].
 
 test_sremove(_) ->
@@ -83,9 +85,9 @@ test_sremove(_) ->
     RemoveFail4 = aserl:lset_remove(?POOLNAME, ?Ns, ?Set, ?Key2, ?Ldt, ?Value1, 0),
     [?_assertMatch({ok, [?Value1]}, Get1),
      ?_assertMatch(ok , Remove1),
-     ?_assertMatch({error, {aerospike_err_large_item_not_found, _ErrorMsg}}, RemoveFail1),
+     ?_assertMatch({error, {?AEROSPIKE_ERR_LARGE_ITEM_NOT_FOUND, _ErrorMsg}}, RemoveFail1),
      ?_assertMatch(ok , SRemove3),
      ?_assertMatch({ok, []}, Get2),
-     ?_assertMatch({error, {aerospike_err_large_item_not_found, _ErrorMsg}}, RemoveFail3),
-     ?_assertMatch({error, {aerospike_err_record_not_found, _ErrorMsg}}, RemoveFail4)
+     ?_assertMatch({error, {?AEROSPIKE_ERR_LARGE_ITEM_NOT_FOUND, _ErrorMsg}}, RemoveFail3),
+     ?_assertMatch({error, {?AEROSPIKE_ERR_RECORD_NOT_FOUND, _ErrorMsg}}, RemoveFail4)
     ].

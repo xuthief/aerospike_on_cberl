@@ -19,7 +19,6 @@
 -type timeout() :: integer().
 -type instance() :: #instance{}.
 
-
 -define(debug, false).
 -undef(debug).
 -define(eunit, false).
@@ -37,3 +36,5 @@
 -define(trace(X, Y), true).
 -endif.
 -endif.
+
+%-include_lib("aserl_error.hrl").

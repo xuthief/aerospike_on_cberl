@@ -18,6 +18,4 @@ typedef struct task {
     void *args;
 } task_t;
 
-static void* worker(void *obj);
-
 #endif

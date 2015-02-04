@@ -3,7 +3,6 @@
 %%% @version 0.0.2
 
 -module(aserl).
--include("aserl_error.hrl").
 -include("aserl.hrl").
 
 -export([start_link/1, start_link/2, start_link/4, start_link/6]).

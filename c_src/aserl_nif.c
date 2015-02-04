@@ -7,6 +7,8 @@
 
 static ErlNifResourceType* aerospike_handle = NULL;
 
+static void* worker(void *obj);
+
 static void aerospike_handle_cleanup(ErlNifEnv* env, void* arg) {}
 
 static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)

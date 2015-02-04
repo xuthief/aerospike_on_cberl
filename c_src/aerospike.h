@@ -4,12 +4,11 @@
 #include <aerospike/aerospike.h>
 #include "queue.h"
 #include "aserl_nif.h"
-#include "aserl_error.h"
 
 #define A_OK(env)                   enif_make_atom(env, "ok")
 #define A_OK_VALUE(env, val)        enif_make_tuple2(env, A_OK(env), val)
 #define A_ERROR(env)                enif_make_atom(env, "error")
-#define A_AS_ERROR(env, err)        enif_make_tuple2(env, A_ERROR(env), enif_make_tuple2(env, enif_make_atom(env, aserl_error_status_string(err.code)), enif_make_string(env, err.message, ERL_NIF_LATIN1)))
+#define A_AS_ERROR(env, err)        enif_make_tuple2(env, A_ERROR(env), enif_make_tuple2(env, enif_make_int(env, err.code), enif_make_string(env, err.message, ERL_NIF_LATIN1)))
 
 #define NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 

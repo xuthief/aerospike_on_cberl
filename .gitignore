@@ -8,3 +8,5 @@ priv
 erl_crash.dump
 .rebar
 tags
+.idea/
+*.iml
