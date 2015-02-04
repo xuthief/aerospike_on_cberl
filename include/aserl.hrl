@@ -25,13 +25,11 @@
 -undef(eunit).
 
 -ifdef(debug).
--define(trace(Str, X), io:format("Mod:~w line:~w ~p ~p~n", 
-                                 [?MODULE, ?LINE, Str, X])).
+-define(trace(Str, X), io:format("Mod:~w line:~w " ++ Str ++ "~n", [?MODULE, ?LINE] ++ X)).
 -else.
 -ifdef(eunit).
 -include_lib("eunit/include/eunit.hrl").
--define(trace(Str, X), ?debugFmt("Mod:~w line:~w ~p ~p~n", 
-                                 [?MODULE, ?LINE, Str, X])).
+-define(trace(Str, X), ?debugFmt("Mod:~w line:~w " ++ Str ++ "~n", [?MODULE, ?LINE] ++ X)).
 -else.
 -define(trace(X, Y), true).
 -endif.

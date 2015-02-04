@@ -1,6 +1,6 @@
 -module(aserl_sets_tests).
 -include_lib("eunit/include/eunit.hrl").
--include("aserl.hrl").
+-include("../include/aserl.hrl").
 -include_lib("../include/aserl_error.hrl").
 
 -define(POOLNAME, testpool).
@@ -56,9 +56,9 @@ test_sadd(_) ->
     ?trace("lset_add ~p - ~p", [?Key1, ?Value1]),
     ok = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 1000),
     Get1 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, 100),
-    _ADD2 = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 0),
+    {error, {?AEROSPIKE_ERR_UDF, _Err}} = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value1, 0),
     Get2 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, 0),
-    _ADD3 = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value2),
+    ok = aserl:lset_add(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt, ?Value2),
     Get3 = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key1, ?Ldt),
     GetFail = aserl:lset_get(?POOLNAME, ?Ns, ?Set, ?Key2, ?Ldt),
     [?_assertMatch({ok, [?Value1]}, Get1)
