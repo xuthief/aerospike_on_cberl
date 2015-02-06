@@ -62,7 +62,7 @@ doc:
 eunit: compile clean-common-test-data
 	$(REBAR) skip_deps=true eunit
 
-test: compile eunit
+test: deps compile eunit
 
 $(DEPS_PLT):
 	@echo Building local plt at $(DEPS_PLT)

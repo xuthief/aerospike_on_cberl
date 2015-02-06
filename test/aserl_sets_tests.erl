@@ -4,6 +4,7 @@
 -include_lib("../include/aserl_error.hrl").
 
 -define(POOLNAME, testpool).
+-define(POOLNAME2, testpool2).
 
 aserl_test_() ->
     [{foreach, fun setup/0, fun clean_up/1,
@@ -21,11 +22,13 @@ aserl_test_() ->
 
 setup() ->
     ?trace("start_link ~p", [?POOLNAME]),
-    aserl:start_link(?POOLNAME, 5, "abj-as-3.yunba.io", 3000),
+    {ok, _} = aserl:start_link(?POOLNAME, 5, "abj-as-3.yunba.io", 3000),
+    {ok, _} = aserl:start_link(?POOLNAME2, 1, "abj-as-3.yunba.io", 3000),
     ok.
 
 clean_up(_) ->
-    aserl:stop(?POOLNAME).
+    ok = aserl:stop(?POOLNAME2),
+    ok = aserl:stop(?POOLNAME).
 
 %%%===================================================================
 %%% Tests

@@ -29,9 +29,15 @@ Then:
 
 Or just include it as a dependency in your rebar config.
 
-   
 
-Aserl-error
+get source(.c) file for rebar.config
+-------
+
+```
+    for file in `grep "\.c\b" ~/debug.make.log | grep "^cc\b" | awk '{print $NF}' | grep -v "\btarget\/"`; do filename=`echo $file | awk -F"/" '{print $NF}'`; find c -name $filename | grep "$file"; done
+```
+
+aserl-error
 -------
 
 ```
