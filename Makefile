@@ -104,13 +104,13 @@ rebuild: distclean deps compile escript dialyzer test
 c:
 	@echo -n updating c modules: 
 	git submodule update --init --recursive
-	@echo -n update c modules done
+#	@echo update c modules done
 	@echo -n building c modules: 
 	make -C c modules > /dev/null
-	@echo build c modules done
+#	@echo build c modules done
 
 .PHONY: clean-c
 clean-c:
 	@echo -n cleaning c modules: 
 	make -C c clean > /dev/null
-	@echo clean c modules done
+#	@echo clean c modules done
