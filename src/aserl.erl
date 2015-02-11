@@ -292,8 +292,8 @@ stop(PoolPid) ->
 
 execute(PoolPid, Cmd) ->
     poolboy:transaction(PoolPid, fun(Worker) ->
-            gen_server:call(Worker, Cmd)
-       end).
+            gen_server:call(Worker, Cmd, infinity)
+       end, infinity).
 
 http_type(view) -> 0;
 http_type(management) -> 1;
