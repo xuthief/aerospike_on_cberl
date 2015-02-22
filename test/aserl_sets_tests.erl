@@ -34,7 +34,7 @@ clean_up(_) ->
 %%% Tests
 %%%===================================================================
 
--define(Ns, "test").
+-define(Ns, "topic").
 -define(Set, "test-set").
 -define(Ldt, "mylset").
 
@@ -44,8 +44,6 @@ clean_up(_) ->
 -define(Value2, <<"test-value1">>).
 
 do_clear(_) ->
-    ?Ns = "test",
-    ?Set = "test-set",
     ?trace("remove ~p", [[?Key1, ?Key2]]),
     aserl:remove(?POOLNAME, ?Ns, ?Set, ?Key1),
     aserl:remove(?POOLNAME, ?Ns, ?Set, ?Key2),
