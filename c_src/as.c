@@ -41,6 +41,15 @@ void *as_connect_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return NULL;
 }
 
+void as_clean_connect_args(ErlNifEnv* env, connect_args_t* args)
+{
+    DEBUG_TRACE("begin clean connect arg");
+    free(args->pass);
+    free(args->user);
+    free(args->host);
+    DEBUG_TRACE("end clean connect arg");
+}
+
 ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     DEBUG_TRACE("begin connect");
@@ -60,10 +69,7 @@ ERL_NIF_TERM as_connect(ErlNifEnv* env, handle_t* handle, void* obj)
 	aerospike_init(p_as, &cfg);
 
     as_res = aerospike_connect(p_as, &err);
-
-    free(args->host);
-    free(args->user);
-    free(args->pass);
+    as_clean_connect_args(env, args);
 
     if (as_res != AEROSPIKE_OK) {
 		aerospike_destroy(p_as);

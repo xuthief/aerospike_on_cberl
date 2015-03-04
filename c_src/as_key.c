@@ -28,6 +28,11 @@ void* as_key_remove_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return NULL;
 }
 
+void as_key_clean_remove_args(ErlNifEnv* env, key_remove_args_t* args)
+{
+    as_key_destroy(&args->key);
+}
+
 ERL_NIF_TERM as_key_remove(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     DEBUG_TRACE("begin");
@@ -39,6 +44,7 @@ ERL_NIF_TERM as_key_remove(ErlNifEnv* env, handle_t* handle, void* obj)
 
 	// Add an integer value to the set.
     res = aerospike_key_remove(&handle->instance, &err, &args->policy, &args->key);
+    as_key_clean_remove_args(env, args);
 
     DEBUG_TRACE("end res: %d", res);
 

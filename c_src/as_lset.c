@@ -37,6 +37,15 @@ void* as_ldt_store_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return NULL;
 }
 
+void as_ldt_clean_store_args(ErlNifEnv* env, ldt_store_args_t* args)
+{
+    DEBUG_TRACE("begin clean args");
+    as_val_destroy(args->p_value);
+    as_ldt_destroy(&args->ldt);
+    as_key_destroy(&args->key);
+    DEBUG_TRACE("end clean args");
+}
+
 ERL_NIF_TERM as_ldt_lset_add(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     DEBUG_TRACE("begin");
@@ -48,6 +57,7 @@ ERL_NIF_TERM as_ldt_lset_add(ErlNifEnv* env, handle_t* handle, void* obj)
 
 	// Add an integer value to the set.
     res = aerospike_lset_add(&handle->instance, &err, &args->policy, &args->key, &args->ldt, args->p_value);
+    as_ldt_clean_store_args(env, args);
 
     DEBUG_TRACE("end res: %d", res);
 
@@ -66,6 +76,7 @@ ERL_NIF_TERM as_ldt_lset_remove(ErlNifEnv* env, handle_t* handle, void* obj)
 
 	// Add an integer value to the set.
     res = aerospike_lset_remove(&handle->instance, &err, &args->policy, &args->key, &args->ldt, args->p_value);
+    as_ldt_clean_store_args(env, args);
 
     if(res != AEROSPIKE_OK)
         return A_AS_ERROR(env, err);
@@ -98,6 +109,12 @@ void* as_ldt_get_args(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return NULL;
 }
 
+void as_ldt_clean_get_args(ErlNifEnv* env, ldt_get_args_t* args)
+{
+    as_ldt_destroy(&args->ldt);
+    as_key_destroy(&args->key);
+}
+
 ERL_NIF_TERM as_ldt_lset_get(ErlNifEnv* env, handle_t* handle, void* obj)
 {
     ldt_get_args_t* args = (ldt_get_args_t*)obj;
@@ -108,6 +125,7 @@ ERL_NIF_TERM as_ldt_lset_get(ErlNifEnv* env, handle_t* handle, void* obj)
 
     res = aerospike_lset_filter(&handle->instance, &err, NULL, &args->key, &args->ldt, NULL, NULL,
             &p_list);
+    as_ldt_clean_get_args(env, args);
 
     if(res != AEROSPIKE_OK)
         return A_AS_ERROR(env, err);
@@ -146,6 +164,7 @@ ERL_NIF_TERM as_ldt_lset_size(ErlNifEnv* env, handle_t* handle, void* obj)
     uint32_t nsize;
 
     res = aerospike_lset_size(&handle->instance, &err, &args->policy, &args->key, &args->ldt, &nsize); 
+    as_ldt_clean_get_args(env, args);
 
     if(res != AEROSPIKE_OK)
         return A_AS_ERROR(env, err);
