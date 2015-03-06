@@ -101,7 +101,7 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
     if (enif_get_int64(env, argv[2], (ErlNifSInt64*)&i64_val))
     {
         // key : integer
-        if(as_key_init_int64(key, ns, set, i64_val)) goto ok;
+        key = as_key_init_int64(key, ns, set, i64_val);
     }
     else if (enif_get_list_length(env, argv[2], &arg_length))
     {
@@ -109,10 +109,15 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
         char *strValue = (char *) malloc(arg_length + 1);
         if (enif_get_string(env, argv[2], strValue, arg_length + 1, ERL_NIF_LATIN1)) 
         {
-            if(as_key_init_strp(key, ns, set, strValue, false)) goto ok;
+            key = as_key_init_strp(key, ns, set, strValue, true);
+            if (!key)
+            {
+                free(strValue);
+            }
+        } else {
+            key = NULL;
+            free(strValue);
         }
-
-        free(strValue);
     }
     else if (enif_inspect_iolist_as_binary(env, argv[2], &val_binary))
     {
@@ -120,9 +125,11 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
         uint8_t *binValue = malloc(sizeof(uint8_t) * val_binary.size);
         memcpy(binValue, val_binary.data, val_binary.size);
 
-        if(as_key_init_rawp(key, ns, set, binValue, val_binary.size, false)) goto ok;
-        
-        free(binValue);
+        key = as_key_init_rawp(key, ns, set, binValue, val_binary.size, true);
+        if (!key)
+        {
+            free(binValue);
+        }
     }
 
     error2:
@@ -131,9 +138,6 @@ as_key* init_key_from_args(ErlNifEnv* env, as_key *key, const ERL_NIF_TERM argv[
     free(ns);
     error0:
 
-    return NULL;
-
-    ok:
     return key;
 }
 
@@ -213,16 +217,13 @@ as_ldt* init_ldt_from_arg(ErlNifEnv* env, as_ldt *p_ldt, as_ldt_type ldt_type, c
     char* str_ldt = (char *) malloc(arg_length + 1);
     if (!enif_get_string(env, arg_ldt, str_ldt, arg_length + 1, ERL_NIF_LATIN1)) goto error1;
 
-	if (!as_ldt_init(p_ldt, str_ldt, ldt_type, NULL)) goto error2;
+    p_ldt = as_ldt_init(p_ldt, str_ldt, ldt_type, NULL);
 
-    return p_ldt;
-
-    error2:
-    free(str_ldt);
     error1:
+    free(str_ldt);
     error0:
 
-    return NULL;
+    return p_ldt;
 }
 
 as_policy_apply* init_policy_apply_from_arg(ErlNifEnv* env, as_policy_apply *p_policy, const ERL_NIF_TERM arg_timeout)
