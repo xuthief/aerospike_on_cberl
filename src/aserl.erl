@@ -3,10 +3,13 @@
 %%% @version 0.0.2
 
 -module(aserl).
+-behaviour(supervisor).
+
 -include("aserl.hrl").
 
 -export([start_link/1, start_link/2, start_link/4, start_link/6]).
 -export([stop/1]).
+-export([init/1]).
 %store operations
 -export([add/4, add/5, replace/4, replace/5, set/4, set/5, store/7]).
 %update operations
@@ -43,15 +46,27 @@ start_link(PoolName, NumCon, Host, Port) ->
     start_link(PoolName, NumCon, Host, Port, "", "").
 -spec start_link(atom(), integer(), string(), integer(), string(), string()) -> {ok, pid()} | {error, _}.
 start_link(PoolName, NumCon, Host, Port, Username, Password) ->
-    SizeArgs = [{size, NumCon},
-                {max_overflow, 0}],
-    PoolArgs = [{name, {local, PoolName}},
-                {worker_module, aserl_worker}] ++ SizeArgs,
-    WorkerArgs = [{host, Host},
-		  {port, Port},
-		  {username, Username},
-		  {password, Password}],
-    poolboy:start_link(PoolArgs, WorkerArgs).
+    Result = supervisor:start_link({local, aserl_sup}, ?MODULE, [PoolName, NumCon, Host, Port, Username, Password]),
+    ?eTrace("Result ~p", [Result]),
+    Result.
+
+init([PoolName, NumCon, Host, Port, Username, Password]) ->
+    Pools = [
+            {PoolName, 
+             [{size, NumCon},
+              {max_overflow, 0}], 
+             [{host, Host},
+              {port, Port},
+              {username, Username},
+              {password, Password}]}
+            ],
+    PoolSpecs = lists:map(fun({Name, SizeArgs, WorkerArgs}) ->
+                    PoolArgs = [{name, {local, Name}},
+                                {worker_module, aserl_worker}] ++ SizeArgs,
+                    poolboy:child_spec(Name, PoolArgs, WorkerArgs)
+            end, Pools),
+    {ok, {{one_for_one, 10, 10}, PoolSpecs}}.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% STORE OPERATIONS %%%
@@ -288,7 +303,9 @@ foreach(Func, {PoolPid, DocName, ViewName, Args}) ->
     end.
 
 stop(PoolPid) ->
-    poolboy:stop(PoolPid).
+    supervisor:terminate_child(aserl_sup, PoolPid),
+    supervisor:delete_child(aserl_sup, PoolPid),
+    ok.
 
 execute(PoolPid, Cmd) ->
     poolboy:transaction(PoolPid, fun(Worker) ->
