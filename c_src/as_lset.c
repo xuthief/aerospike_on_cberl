@@ -55,6 +55,7 @@ ERL_NIF_TERM as_ldt_lset_add(ErlNifEnv* env, handle_t* handle, void* obj)
     as_status res;
 	as_error err;
 
+    TRACE2("thread id %d, handle %x, instance %x", pthread_self(), handle, &handle->instance);
 	// Add an integer value to the set.
     res = aerospike_lset_add(&handle->instance, &err, &args->policy, &args->key, &args->ldt, args->p_value);
     as_ldt_clean_store_args(env, args);

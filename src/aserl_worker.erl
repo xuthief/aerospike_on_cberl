@@ -46,6 +46,7 @@ start_link(Args) ->
 init([{host, Host}, {port, Port}, {username, Username}, {password, Password}]) ->
     process_flag(trap_exit, true),
     {ok, Handle} = aserl_nif:new(),
+    ?eTrace("self ~p handle ~p", [self(), Handle]),
     ok = aserl_nif:control(Handle, op(connect), [Host, Port, Username, Password]),
     receive
         ok -> {ok, #instance{handle = Handle}};
@@ -156,6 +157,7 @@ handle_call({key_remove, NS, Set, Key, Timeout}, _From,
 handle_call({lset_store, Type, NS, Set, Key, Ldt, Value, Timeout}, _From, 
             State = #instance{handle = Handle}) ->
     ok = aserl_nif:control(Handle, op(Type), [NS, Set, Key, Ldt, Value, Timeout]),
+    ?eTrace("handle call lset store by worker[~p], Handle[~p]", [self(), Handle]),
     receive
         Reply -> {reply, Reply, State}
     end;

@@ -36,3 +36,5 @@
 -endif.
 
 %-include_lib("aserl_error.hrl").
+-include_lib("eunit/include/eunit.hrl").
+-define(eTrace(Str, X), ?debugFmt("Mod:~w line:~w " ++ Str ++ "~n", [?MODULE, ?LINE] ++ X)).

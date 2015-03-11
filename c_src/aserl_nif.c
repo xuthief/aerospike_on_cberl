@@ -59,6 +59,8 @@ NIF(aserl_nif_new)
         return enif_make_atom(env, "error");
     }
 
+    TRACE2("create thread id %d, handle %x", pthread_self(), handle);
+
     return enif_make_tuple2(env, enif_make_atom(env, "ok"), enif_make_resource(env, handle));
 }
 

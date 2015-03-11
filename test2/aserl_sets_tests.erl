@@ -23,13 +23,14 @@ aserl_test_() ->
 
 setup() ->
     ?trace("start_link ~p", [?POOLNAME]),
-    {ok, _} = aserl:start_link(?POOLNAME, 5, "abj-as-2.yunba.io", 3000),
-    {ok, _} = aserl:start_link(?POOLNAME2, 1, "abj-as-2.yunba.io", 3000),
+    {ok, _} = aserl:start_link(?POOLNAME, 5, "abj-as2-1", 3000),
+    %{ok, _} = aserl:start_link(?POOLNAME2, 1, "abj-as2-1", 3000),
     ok.
 
 clean_up(_) ->
-    ok = aserl:stop(?POOLNAME2),
-    ok = aserl:stop(?POOLNAME).
+    %ok = aserl:stop(?POOLNAME2),
+    ok = aserl:stop(?POOLNAME),
+    ok.
 
 %%%===================================================================
 %%% Tests
@@ -54,11 +55,27 @@ do_clear(_) ->
 %%% Tests
 %%%===================================================================
 
+add_val(_Key, 100000) -> ok;
+add_val(Key, Index) ->
+    Val = lists:concat(["erlang_value_", Index]),
+    ?trace("lset_add ~p - ~p", [Key, Val]),
+    aserl:lset_add(?POOLNAME, ?Ns, ?Set, Key, ?Ldt, Val, 1000),
+    add_val(Key, Index + 1).
+
+add_key(10) -> ok;
+add_key(Index) ->
+    {_Mega, S, Micr} = os:timestamp(),
+    Key = lists:concat(["key_", S, "_", Micr, "_", Index]),
+    ?trace("remove ~p ", [Key]),
+    aserl:remove(?POOLNAME, ?Ns, ?Set, Key),
+    add_val(Key, 0),
+    add_key(Index + 1).
+
 test_sadd2(_) ->
-    L = lists:seq(1,10),
-    lists:map(fun(I) ->
-                spawn(fun()->test_sadd(I) end)
-        end, L).
+    add_key(0),
+    [?_assertMatch(ok, ok)
+    ].
+
 
 test_sadd(_) ->
     ?trace("lset_add ~p - ~p", [?Key1, ?Value1]),
