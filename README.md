@@ -1,11 +1,9 @@
-CBERL
+ASERL
 ====
 
-[![Build Status](https://travis-ci.org/chitika/aerospike.svg?branch=master)](https://travis-ci.org/chitika/aerospike)
-
-NIF based Erlang bindings for aerospike based on libaerospike. 
-CBERL is at early stage of development, it only supports very basic functionality. Please submit bugs and patches if you find any.
-Tested on mac, debian squeeze and amazon linux.
+NIF based Erlang bindings for aerospike based on aerospike c sdk and cberl. 
+ASERL is at early stage of development, it only supports very basic functionality. Please submit bugs and patches if you find any.
+Tested on mac and amazon linux.
 
 Quick Setup/Start
 ---------
@@ -65,8 +63,10 @@ For more information on all the functions -> ./rebar doc (most of documentation 
 
 Performance
 -------
+Here is benchmark of lset_add(ldt, run ($escript bench/aserl_bench.erl))
+all test 200000 add done in 89 sec with 20 procs
+as 2247.191011tps
 
-I included [results](https://github.com/wcummings/aerospike/blob/master/bench/macmini_aerospike_new.png) of [basho_bench](http://docs.basho.com/riak/latest/cookbooks/Benchmarking/) which I ran on my mac. It is the results of 100 processes using a pool of 5 connections. I included basha_bench driver and config file under bench. Please tweak the config file for your requirement and run your own benchmarks.
 
 TODO
 ----
